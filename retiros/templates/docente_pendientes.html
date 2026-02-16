@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}
+Panel de Retiros - {{ grado.nombre }}
+{% endblock %}
+
+
+{% block content %}
+
+<div class="header-status">
+    <div>
+        <strong>Grado {{ grado.nombre }}</strong>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;font-weight:bold;color:#ff7675;">
+        <span style="
+            height:10px;
+            width:10px;
+            background:#ff7675;
+            border-radius:50%;
+            display:inline-block;
+            animation: blink 1.2s infinite;
+        "></span>
+        EN VIVO
+    </div>
+</div>
+
+
+<ul id="listaRetiros" style="list-style:none;padding:0;display:grid;gap:10px;">
+
+    {% for retiro in retiros %}
+        <li class="card" style="display:flex;justify-content:space-between;align-items:center;border-left:6px solid #27ae60;">
+            <span style="font-weight:bold;">
+                {{ retiro.alumno.nombre }}
+            </span>
+
+            <a href="{% url 'marcar_entregado' retiro.id %}" class="btn btn-success">
+                ENTREGAR
+            </a>
+        </li>
+    {% empty %}
+        <li class="card" style="text-align:center;color:#777;">
+            No hay alumnos pendientes
+        </li>
+    {% endfor %}
+
+</ul>
+
+
+<div style="margin-top:20px;text-align:center;">
+    <a href="{% url 'docente_seleccionar_grado' %}" style="color:#666;text-decoration:none;">
+        ← Volver atrás
+    </a>
+</div>
+
+
+<style>
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
+</style>
+
+{% endblock %}
+
+
+
+{% block scripts %}
+
+<script>
+
+let cantidadAnterior = parseInt("{{ retiros|length|default:0 }}");
+const gradoId = "{{ grado.id }}";
+
+
+function crearTarjetaHTML(id, nombre) {
+    return `
+        <li class="card" style="display:flex;justify-content:space-between;align-items:center;border-left:6px solid #27ae60;">
+            <span style="font-weight:bold;">
+                ${nombre}
+            </span>
+
+            <a href="/entregar/${id}/" class="btn btn-success">
+                ENTREGAR
+            </a>
+        </li>
+    `;
+}
+
+
+function cargarLista() {
+    fetch(`/docente/${gradoId}/lista/`)
+        .then(response => response.json())
+        .then(data => {
+
+            const lista = document.getElementById("listaRetiros");
+
+            if (data.retiros.length === 0) {
+                lista.innerHTML = `<li class="card" style="text-align:center;color:#777;">No hay alumnos pendientes</li>`;
+                return;
+            }
+
+            lista.innerHTML = data.retiros
+                .map(r => crearTarjetaHTML(r.id, r.nombre))
+                .join('');
+
+        });
+}
+
+
+
+function verificarNuevosRetiros() {
+
+    fetch(`/docente/${gradoId}/cantidad/`)
+        .then(response => response.json())
+        .then(data => {
+
+            if (data.cantidad !== cantidadAnterior) {
+
+                cargarLista();
+
+                // 🔔 sonido + vibración global del base
+                reproducirSonido();
+                vibrar();
+            }
+
+            cantidadAnterior = data.cantidad;
+
+        })
+        .catch(err => console.error("Error de conexión"));
+}
+
+
+setInterval(verificarNuevosRetiros, 4000);
+
+</script>
+
+{% endblock %}

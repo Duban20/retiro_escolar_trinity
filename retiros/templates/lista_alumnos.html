@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}
+Alumnos - {{ grado.nombre }}
+{% endblock %}
+
+
+{% block content %}
+
+<div class="header-status">
+    <strong>Alumnos de {{ grado.nombre }}</strong>
+    <span style="margin-left:15px;color:white;">
+        Quedan {{ cantidad }} alumnos en el colegio
+    </span>
+</div>
+
+<!-- 🔎 BUSCADOR -->
+<div class="card" style="margin-bottom:15px;">
+    <input 
+        type="text" 
+        id="buscadorAlumno"
+        placeholder="🔎 Buscar alumno..."
+        style="width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;font-size:15px;"
+    >
+</div>
+
+
+<form method="post" action="{% url 'crear_retiros_masivos' %}">
+{% csrf_token %}
+
+<div class="card" style="padding:0;overflow:hidden;">
+
+<table style="width:100%;border-collapse:collapse;font-size:14px;">
+
+    <thead style="background:#2c3e50;color:white;">
+        <tr>
+            <th style="padding:12px;width:40px;text-align:center;">
+                <input type="checkbox" id="checkTodos">
+            </th>
+            <th style="padding:12px;text-align:left;">Alumno</th>
+            <th style="padding:12px;text-align:center;">Estado</th>
+            <th style="padding:12px;text-align:right;">Acción</th>
+        </tr>
+    </thead>
+
+    <tbody id="tablaAlumnos">
+
+        {% for alumno in alumnos %}
+        <tr class="fila-alumno">
+
+            <td style="text-align:center;">
+                {% if not alumno.tiene_retiro %}
+                    <input type="checkbox" name="alumnos" value="{{ alumno.id }}" class="checkAlumno">
+                {% endif %}
+            </td>
+
+            <td style="padding:12px;font-weight:600;">
+                {{ alumno.nombre }}
+            </td>
+
+            <td style="padding:12px;text-align:center;">
+
+                {% if alumno.tiene_retiro %}
+                    <span class="estado pendiente">
+                        ⏳ Pendiente
+                    </span>
+                {% else %}
+                    <span class="estado disponible">
+                        Disponible
+                    </span>
+                {% endif %}
+
+            </td>
+
+            <td style="padding:12px;text-align:right;">
+
+                {% if alumno.tiene_retiro %}
+                    <button class="btn btn-warning" disabled>
+                        Ya avisado
+                    </button>
+                {% else %}
+                    <a href="{% url 'crear_retiro' alumno.id %}" class="btn btn-danger">
+                        Avisar Retiro
+                    </a>
+                {% endif %}
+
+            </td>
+
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4" style="padding:20px;text-align:center;color:#777;">
+                No hay alumnos registrados en este grado.
+            </td>
+        </tr>
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+</div>
+
+
+<div style="margin-top:15px;text-align:center;">
+    <button type="submit" class="btn btn-danger">
+        🚨 Avisar retiros seleccionados
+    </button>
+</div>
+
+</form>
+
+<div style="margin-top:20px;text-align:center;">
+    <a href="{% url 'lista_grados' grado.nivel.id %}" style="color:#666;text-decoration:none;">
+        ← Volver atrás
+    </a>
+</div>
+
+
+<style>
+
+/* Zebra */
+#tablaAlumnos tr:nth-child(even) {
+    background: #f8f9fa;
+}
+
+#tablaAlumnos tr:hover {
+    background: #eaf3ff;
+    transition: 0.2s;
+}
+
+/* Estados */
+.estado {
+    padding:4px 8px;
+    border-radius:6px;
+    font-size:12px;
+    font-weight:bold;
+}
+
+.disponible {
+    background:#d4edda;
+    color:#155724;
+}
+
+.pendiente {
+    background:#ffeaa7;
+    color:#b7791f;
+}
+
+</style>
+
+{% endblock %}
+
+
+
+{% block scripts %}
+
+<script>
+
+/* 🔤 Normalizar texto (quitar tildes) */
+function normalizar(texto) {
+    return texto
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+}
+
+
+/* 🔎 BUSCADOR SIN TILDES */
+const buscador = document.getElementById("buscadorAlumno");
+
+buscador.addEventListener("keyup", function() {
+
+    const filtro = normalizar(this.value);
+    const filas = document.querySelectorAll(".fila-alumno");
+
+    filas.forEach(fila => {
+
+        const texto = normalizar(fila.innerText);
+
+        if (texto.includes(filtro)) {
+            fila.style.display = "";
+        } else {
+            fila.style.display = "none";
+        }
+
+    });
+
+});
+
+
+/* ✅ CHECK TODOS */
+document.getElementById("checkTodos").addEventListener("change", function(){
+
+    document.querySelectorAll(".checkAlumno").forEach(c => {
+        c.checked = this.checked;
+    });
+
+});
+
+</script>
+
+{% endblock %}

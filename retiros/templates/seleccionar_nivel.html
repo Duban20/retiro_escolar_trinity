@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}
+Seleccionar Nivel Educativo
+{% endblock %}
+
+
+{% block content %}
+
+<div class="header-status">
+    <div>
+        <strong>Seleccionar Nivel Educativo</strong>
+    </div>
+</div>
+
+
+<ul style="
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+    gap:15px;
+    list-style:none;
+    padding:0;
+">
+
+    {% for nivel in niveles %}
+        <li class="card" style="text-align:center;border-top:5px solid #3498db;">
+            <a href="{% url 'lista_grados' nivel.id %}"
+               style="
+                    display:block;
+                    padding:30px 10px;
+                    text-decoration:none;
+                    font-weight:bold;
+                    color:#2c3e50;
+                    font-size:1.1rem;
+               ">
+                {{ nivel.nombre }}
+            </a>
+        </li>
+    {% endfor %}
+
+</ul>
+
+<div style="margin-top:20px;text-align:center;">
+    <a href="{% url 'seleccionar_rol' %}" style="color:#666;text-decoration:none;">
+        ← Volver atrás
+    </a>
+</div>
+
+{% endblock %}

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Sistema de Retiros{% endblock %}</title>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            max-width: 700px;
+            margin: auto;
+        }
+
+        /* HEADER GLOBAL */
+        .main-header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .main-header h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        /* HEADER STATUS INTERNO */
+        .header-status {
+            background: #34495e;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* BOTONES */
+        .btn {
+            padding: 10px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            display: inline-block;
+            font-size: 14px;
+        }
+
+        .btn-success { background: #27ae60; }
+        .btn-primary { background: #3498db; }
+        .btn-warning { background: #e67e22; }
+        .btn-danger { background: #e74c3c; }
+
+        /* ALERTAS FLOTANTES */
+        .alert-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .alert {
+            background: #27ae60;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .alert.warning { background: #e67e22; }
+        .alert.error { background: #e74c3c; }
+
+        @keyframes fadeIn {
+            from { opacity:0; transform: translateY(-10px);}
+            to { opacity:1; transform: translateY(0);}
+        }
+
+        /* TARJETAS */
+        .card {
+            background: white;
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0px 3px 6px rgba(0,0,0,0.1);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 500px) {
+            .main-header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
+
+    </style>
+
+</head>
+<body>
+
+<!-- 🔔 SONIDO GLOBAL -->
+<audio id="alertSound">
+    <source src="https://www.soundjay.com/buttons/sounds/button-3.mp3" type="audio/mpeg">
+</audio>
+
+
+<!-- 🔔 ALERTAS FLOTANTES -->
+<div class="alert-container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+
+<div class="dashboard-container">
+
+    <!-- ✅ ENCABEZADO GLOBAL -->
+    <div class="main-header">
+        <h1>Sistema de Retiro Escolar</h1>
+
+        <!-- Cambia 'inicio' por el nombre real de tu URL -->
+        <a href="{% url 'seleccionar_rol' %}" class="btn btn-primary">
+            Inicio
+        </a>
+    </div>
+
+
+    {% block content %}
+    {% endblock %}
+
+</div>
+
+
+<script>
+
+/* AUTO OCULTAR ALERTAS */
+setTimeout(() => {
+    document.querySelectorAll(".alert").forEach(el => {
+        el.style.opacity = "0";
+        setTimeout(()=> el.remove(), 500);
+    });
+}, 4000);
+
+
+/* SONIDO GLOBAL */
+function reproducirSonido(){
+    const audio = document.getElementById("alertSound");
+    if(audio){
+        audio.currentTime = 0;
+        audio.play();
+    }
+}
+
+/* VIBRACION GLOBAL */
+function vibrar(){
+    if(navigator.vibrate){
+        navigator.vibrate([300,150,300]);
+    }
+}
+
+</script>
+
+{% block scripts %}
+{% endblock %}
+
+</body>
+</html>

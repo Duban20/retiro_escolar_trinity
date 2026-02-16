@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}
+Grados - {{ nivel.nombre }}
+{% endblock %}
+
+
+
+{% block content %}
+
+<div class="header-status">
+    <div>
+        <strong>Grados de {{ nivel.nombre }}</strong>
+    </div>
+</div>
+
+
+<ul style="
+    list-style:none;
+    padding:0;
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+    gap:12px;
+">
+
+    {% for grado in grados %}
+        <li>
+            <a href="{% url 'lista_alumnos' grado.id %}"
+               class="card"
+               style="
+                    display:flex;
+                    align-items:center;
+                    font-weight:bold;
+                    text-decoration:none;
+                    color:#2c3e50;
+                    transition:0.2s;
+               "
+               onmouseover="this.style.background='#3498db';this.style.color='white';this.style.transform='scale(1.03)'"
+               onmouseout="this.style.background='white';this.style.color='#2c3e50';this.style.transform='scale(1)'"
+            >
+                📚 {{ grado.nombre }}
+            </a>
+        </li>
+    {% endfor %}
+
+</ul>
+
+<div style="margin-top:20px;text-align:center;">
+    <a href="{% url 'seleccionar_nivel' %}" style="color:#666;text-decoration:none;">
+        ← Volver atrás
+    </a>
+</div>
+
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Seleccionar Rol{% endblock %}
+
+{% block content %}
+
+<div class="header-status">
+    <h2>Bienvenido</h2>
+</div>
+
+<div class="card" style="text-align:center">
+
+    <h2>Seleccione su cargo</h2>
+
+    <br>
+
+    <a class="btn btn-primary" href="{% url 'seleccionar_nivel' %}">
+        👮 Portería
+    </a>
+
+    <br><br>
+
+    <a class="btn btn-success" href="{% url 'docente_seleccionar_grado' %}">
+        👩‍🏫 Docente
+    </a>
+
+</div>
+
+{% endblock %}

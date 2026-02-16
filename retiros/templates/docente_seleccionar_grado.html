@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}
+Seleccionar Curso
+{% endblock %}
+
+
+{% block content %}
+
+<div class="dashboard-container">
+
+    <div class="header-status" style="justify-content:center;">
+        <strong>Seleccione su Curso</strong>
+    </div>
+
+    <ul class="grid-cursos">
+
+        {% for grado in grados %}
+            <li class="card curso-card">
+
+                <a href="{% url 'docente_pendientes' grado.id %}" class="link-curso">
+
+                    <div style="display:flex;align-items:center;">
+                        <span class="icono-curso">🏫</span>
+                        {{ grado.nombre }}
+                    </div>
+
+                    <span class="flecha-accion">➜</span>
+
+                </a>
+
+            </li>
+
+        {% empty %}
+            <li class="card" style="text-align:center;color:#777;">
+                No tiene cursos asignados actualmente.
+            </li>
+        {% endfor %}
+
+    </ul>
+
+</div>
+
+<div style="margin-top:20px;text-align:center;">
+    <a href="{% url 'seleccionar_rol' %}" style="color:#666;text-decoration:none;">
+        ← Volver atrás
+    </a>
+</div>
+
+
+<style>
+
+.grid-cursos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 12px;
+    list-style: none;
+    padding: 0;
+}
+
+.curso-card {
+    padding: 0;
+    transition: all 0.25s ease;
+}
+
+.curso-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0px 6px 12px rgba(0,0,0,0.12);
+}
+
+.link-curso {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px;
+    text-decoration: none;
+    color: #2c3e50;
+    font-weight: bold;
+}
+
+.icono-curso {
+    background: #ebf5ff;
+    color: #3498db;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    margin-right: 12px;
+}
+
+.flecha-accion {
+    color: #bbb;
+    font-size: 18px;
+    transition: 0.2s;
+}
+
+.curso-card:hover .flecha-accion {
+    color: #3498db;
+    transform: translateX(4px);
+}
+
+</style>
+
+{% endblock %}
