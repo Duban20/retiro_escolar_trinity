@@ -92,7 +92,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 if DEBUG:
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.mysql',
+            'ENGINE': 'django.db.backends.postgresql',
             'NAME': os.getenv('DEV_DB_NAME'),
             'USER': os.getenv('DEV_DB_USER'),
             'PASSWORD': os.getenv('DEV_DB_PASSWORD'),
@@ -103,7 +103,7 @@ if DEBUG:
 else:
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.mysql',
+            'ENGINE': 'django.db.backends.postgresql',
             'NAME': os.getenv('PROD_DB_NAME'),
             'USER': os.getenv('PROD_DB_USER'),
             'PASSWORD': os.getenv('PROD_DB_PASSWORD'),
