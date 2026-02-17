@@ -130,3 +130,53 @@ Alumnos - {{ grado.nombre }}
 </div>
 
 {% endblock %}
+
+{% block scripts %}
+
+<script>
+
+/* 🔤 Normalizar texto (quitar tildes) */
+function normalizar(texto) {
+    return texto
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+}
+
+
+/* 🔎 BUSCADOR SIN TILDES */
+const buscador = document.getElementById("buscadorAlumno");
+
+buscador.addEventListener("keyup", function() {
+
+    const filtro = normalizar(this.value);
+    const filas = document.querySelectorAll(".fila-alumno");
+
+    filas.forEach(fila => {
+
+        const texto = normalizar(fila.innerText);
+
+        if (texto.includes(filtro)) {
+            fila.style.display = "";
+        } else {
+            fila.style.display = "none";
+        }
+
+    });
+
+});
+
+
+/* ✅ CHECK TODOS */
+document.getElementById("checkTodos").addEventListener("change", function(){
+
+    document.querySelectorAll(".checkAlumno").forEach(c => {
+        c.checked = this.checked;
+    });
+
+});
+
+</script>
+
+{% endblock %}
+
