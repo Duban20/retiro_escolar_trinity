@@ -82,9 +82,117 @@ Panel de Retiros - {{ grado.nombre }}
 <div class="text-center mt-5">
     <a href="{% url 'docente_seleccionar_grado' %}" 
        class="volver-link">
-        ← Volver
+        ← Volver atrás
     </a>
 </div>
+
+
+{% block scripts %}
+
+<script>
+
+let cantidadAnterior = parseInt("{{ retiros|length|default:0 }}");
+const gradoId = "{{ grado.id }}";
+
+
+function crearTarjetaHTML(id, nombre) {
+    return `
+        <li class="retiro-card p-3">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <div class="d-flex align-items-center gap-3">
+
+                    <div class="avatar-circle">
+                        ${nombre.charAt(0).toUpperCase()}
+                    </div>
+
+                    <div>
+                        <div class="fw-semibold">
+                            ${nombre}
+                        </div>
+                        <small class="text-muted">
+                            Pendiente de entrega
+                        </small>
+                    </div>
+
+                </div>
+
+                <a href="/entregar/${id}/" 
+                   class="btn btn-success btn-sm rounded-pill px-3">
+                    Entregar
+                </a>
+
+            </div>
+
+        </li>
+    `;
+}
+
+
+function cargarLista() {
+    fetch(`/docente/${gradoId}/lista/`)
+        .then(response => response.json())
+        .then(data => {
+
+            const lista = document.getElementById("listaRetiros");
+
+            if (data.retiros.length === 0) {
+                lista.innerHTML = `
+                    <li class="empty-state p-5 text-center">
+                        <div class="mb-2 fs-4">✔</div>
+                        <div class="fw-semibold">
+                            No hay alumnos pendientes
+                        </div>
+                        <small class="text-muted">
+                            Todo está al día
+                        </small>
+                    </li>
+                `;
+                return;
+            }
+
+            lista.innerHTML = data.retiros
+                .map(r => crearTarjetaHTML(r.id, r.nombre))
+                .join('');
+
+        });
+}
+
+
+
+function verificarNuevosRetiros() {
+
+    fetch(`/docente/${gradoId}/cantidad/`)
+        .then(response => response.json())
+        .then(data => {
+
+            if (data.cantidad !== cantidadAnterior) {
+
+                cargarLista();
+
+                // 🔔 sonido y vibración del base
+                if (typeof reproducirSonido === "function") {
+                    reproducirSonido();
+                }
+
+                if (typeof vibrar === "function") {
+                    vibrar();
+                }
+            }
+
+            cantidadAnterior = data.cantidad;
+
+        })
+        .catch(err => console.error("Error de conexión"));
+}
+
+
+setInterval(verificarNuevosRetiros, 4000);
+
+</script>
+
+{% endblock %}
 
 
 <style>

@@ -4,200 +4,129 @@
 Alumnos - {{ grado.nombre }}
 {% endblock %}
 
-
 {% block content %}
 
-<div class="header-status">
-    <strong>Alumnos de {{ grado.nombre }}</strong>
-    <span style="margin-left:15px;color:white;">
-        Quedan {{ cantidad }} alumnos en el colegio
-    </span>
+<!-- ENCABEZADO -->
+<div class="mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+        <div>
+            <h2 class="fw-bold mb-1">
+                {{ grado.nombre }}
+            </h2>
+            <small class="text-muted">
+                {{ cantidad }} alumnos activos
+            </small>
+        </div>
+    </div>
 </div>
 
-<!-- 🔎 BUSCADOR -->
-<div class="card" style="margin-bottom:15px;">
-    <input 
-        type="text" 
-        id="buscadorAlumno"
-        placeholder="🔎 Buscar alumno..."
-        style="width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;font-size:15px;"
-    >
+<!-- BUSCADOR -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+                🔎
+            </span>
+            <input 
+                type="text" 
+                id="buscadorAlumno"
+                class="form-control border-start-0"
+                placeholder="Buscar alumno..."
+            >
+        </div>
+    </div>
 </div>
-
 
 <form method="post" action="{% url 'crear_retiros_masivos' %}">
 {% csrf_token %}
 
-<div class="card" style="padding:0;overflow:hidden;">
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
 
-<table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <table class="table table-striped align-middle table-hover mb-0">
 
-    <thead style="background:#2c3e50;color:white;">
-        <tr>
-            <th style="padding:12px;width:40px;text-align:center;">
-                <input type="checkbox" id="checkTodos">
-            </th>
-            <th style="padding:12px;text-align:left;">Alumno</th>
-            <th style="padding:12px;text-align:center;">Estado</th>
-            <th style="padding:12px;text-align:right;">Acción</th>
-        </tr>
-    </thead>
+            <thead class="table-light">
+                <tr>
+                    <th style="width:50px;"></th>
+                    <th>Alumno</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-end">Acción</th>
+                </tr>
+            </thead>
 
-    <tbody id="tablaAlumnos">
+            <tbody id="tablaAlumnos">
 
-        {% for alumno in alumnos %}
-        <tr class="fila-alumno">
+                {% for alumno in alumnos %}
+                <tr class="fila-alumno">
 
-            <td style="text-align:center;">
-                {% if not alumno.tiene_retiro %}
-                    <input type="checkbox" name="alumnos" value="{{ alumno.id }}" class="checkAlumno">
-                {% endif %}
-            </td>
+                    <td>
+                        {% if not alumno.tiene_retiro %}
+                            <input type="checkbox"
+                                   name="alumnos"
+                                   value="{{ alumno.id }}"
+                                   class="form-check-input checkAlumno">
+                        {% endif %}
+                    </td>
 
-            <td style="padding:12px;font-weight:600;">
-                {{ alumno.nombre }}
-            </td>
+                    <td class="fw-semibold">
+                        {{ alumno.nombre }}
+                    </td>
 
-            <td style="padding:12px;text-align:center;">
+                    <td class="text-center">
+                        {% if alumno.tiene_retiro %}
+                            <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill px-3">
+                                ⏳ Pendiente
+                            </span>
+                        {% else %}
+                            <span class="badge bg-success-subtle text-success-emphasis rounded-pill px-3">
+                                Disponible
+                            </span>
+                        {% endif %}
+                    </td>
 
-                {% if alumno.tiene_retiro %}
-                    <span class="estado pendiente">
-                        ⏳ Pendiente
-                    </span>
-                {% else %}
-                    <span class="estado disponible">
-                        Disponible
-                    </span>
-                {% endif %}
+                    <td class="text-end">
+                        {% if alumno.tiene_retiro %}
+                            <button class="btn btn-warning btn-sm rounded-pill" disabled>
+                                Ya avisado
+                            </button>
+                        {% else %}
+                            <a href="{% url 'crear_retiro' alumno.id %}"
+                               class="btn btn-danger btn-sm rounded-pill px-3">
+                                Avisar
+                            </a>
+                        {% endif %}
+                    </td>
 
-            </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center py-4 text-muted">
+                        No hay alumnos registrados en este grado.
+                    </td>
+                </tr>
+                {% endfor %}
 
-            <td style="padding:12px;text-align:right;">
+            </tbody>
 
-                {% if alumno.tiene_retiro %}
-                    <button class="btn btn-warning" disabled>
-                        Ya avisado
-                    </button>
-                {% else %}
-                    <a href="{% url 'crear_retiro' alumno.id %}" class="btn btn-danger">
-                        Avisar Retiro
-                    </a>
-                {% endif %}
+        </table>
 
-            </td>
-
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="4" style="padding:20px;text-align:center;color:#777;">
-                No hay alumnos registrados en este grado.
-            </td>
-        </tr>
-        {% endfor %}
-
-    </tbody>
-
-</table>
-
+    </div>
 </div>
 
-
-<div style="margin-top:15px;text-align:center;">
-    <button type="submit" class="btn btn-danger">
+<!-- BOTÓN MASIVO -->
+<div class="text-center mt-4">
+    <button type="submit" class="btn btn-danger rounded-pill px-4">
         🚨 Avisar retiros seleccionados
     </button>
 </div>
 
 </form>
 
-<div style="margin-top:20px;text-align:center;">
-    <a href="{% url 'lista_grados' grado.nivel.id %}" style="color:#666;text-decoration:none;">
-        ← Volver atrás
+<div class="text-center mt-4">
+    <a href="{% url 'lista_grados' grado.nivel.id %}"
+       class="text-muted text-decoration-none small">
+        ← Volver
     </a>
 </div>
-
-
-<style>
-
-/* Zebra */
-#tablaAlumnos tr:nth-child(even) {
-    background: #f8f9fa;
-}
-
-#tablaAlumnos tr:hover {
-    background: #eaf3ff;
-    transition: 0.2s;
-}
-
-/* Estados */
-.estado {
-    padding:4px 8px;
-    border-radius:6px;
-    font-size:12px;
-    font-weight:bold;
-}
-
-.disponible {
-    background:#d4edda;
-    color:#155724;
-}
-
-.pendiente {
-    background:#ffeaa7;
-    color:#b7791f;
-}
-
-</style>
-
-{% endblock %}
-
-
-
-{% block scripts %}
-
-<script>
-
-/* 🔤 Normalizar texto (quitar tildes) */
-function normalizar(texto) {
-    return texto
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-}
-
-
-/* 🔎 BUSCADOR SIN TILDES */
-const buscador = document.getElementById("buscadorAlumno");
-
-buscador.addEventListener("keyup", function() {
-
-    const filtro = normalizar(this.value);
-    const filas = document.querySelectorAll(".fila-alumno");
-
-    filas.forEach(fila => {
-
-        const texto = normalizar(fila.innerText);
-
-        if (texto.includes(filtro)) {
-            fila.style.display = "";
-        } else {
-            fila.style.display = "none";
-        }
-
-    });
-
-});
-
-
-/* ✅ CHECK TODOS */
-document.getElementById("checkTodos").addEventListener("change", function(){
-
-    document.querySelectorAll(".checkAlumno").forEach(c => {
-        c.checked = this.checked;
-    });
-
-});
-
-</script>
 
 {% endblock %}
