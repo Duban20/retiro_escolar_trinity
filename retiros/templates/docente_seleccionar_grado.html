@@ -4,103 +4,135 @@
 Seleccionar Curso
 {% endblock %}
 
-
 {% block content %}
 
-<div class="dashboard-container">
+<!-- Encabezado moderno -->
+<div class="text-center mb-5">
+    <h1 class="fw-bold display-6 mb-2">
+        Seleccione su Curso
+    </h1>
+    <p class="text-muted">
+        Elija el curso para ver los retiros pendientes
+    </p>
+</div>
 
-    <div class="header-status" style="justify-content:center;">
-        <strong>Seleccione su Curso</strong>
-    </div>
+<!-- Lista de cursos -->
+<div class="d-flex flex-column gap-4">
 
-    <ul class="grid-cursos">
+    {% for grado in grados %}
 
-        {% for grado in grados %}
-            <li class="card curso-card">
+        <a href="{% url 'docente_pendientes' grado.id %}" 
+           class="text-decoration-none">
 
-                <a href="{% url 'docente_pendientes' grado.id %}" class="link-curso">
+            <div class="curso-card p-4">
 
-                    <div style="display:flex;align-items:center;">
-                        <span class="icono-curso">🏫</span>
-                        {{ grado.nombre }}
+                <div class="d-flex align-items-center justify-content-between">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <!-- Icono elegante -->
+                        <div class="icon-wrapper">
+                            <i class="bi bi-journal-bookmark-fill"></i>
+                        </div>
+
+                        <div>
+                            <h5 class="fw-semibold text-dark mb-1">
+                                {{ grado.nombre }}
+                            </h5>
+                            <small class="text-muted">
+                                Acceder al curso
+                            </small>
+                        </div>
+
                     </div>
 
-                    <span class="flecha-accion">➜</span>
+                    <div class="arrow">
+                        →
+                    </div>
 
-                </a>
+                </div>
 
-            </li>
+            </div>
 
-        {% empty %}
-            <li class="card" style="text-align:center;color:#777;">
+        </a>
+
+    {% empty %}
+
+        <div class="card border-0 shadow-sm text-center p-5">
+            <i class="bi bi-info-circle fs-2 text-muted mb-3"></i>
+            <p class="text-muted mb-0">
                 No tiene cursos asignados actualmente.
-            </li>
-        {% endfor %}
+            </p>
+        </div>
 
-    </ul>
+    {% endfor %}
 
 </div>
 
-<div style="margin-top:20px;text-align:center;">
-    <a href="{% url 'seleccionar_rol' %}" style="color:#666;text-decoration:none;">
-        ← Volver atrás
+<!-- Botón volver -->
+<div class="text-center mt-5">
+    <a href="{% url 'seleccionar_rol' %}" 
+       class="volver-link">
+        ← Volver al inicio
     </a>
 </div>
 
 
 <style>
 
-.grid-cursos {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 12px;
-    list-style: none;
-    padding: 0;
-}
-
+/* Tarjeta estilo premium */
 .curso-card {
-    padding: 0;
-    transition: all 0.25s ease;
+    background: #ffffff;
+    border-radius: 1.25rem;
+    border: 1px solid #e9ecef;
+    transition: all .25s ease;
 }
 
 .curso-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0px 6px 12px rgba(0,0,0,0.12);
+    transform: translateY(-4px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.06);
 }
 
-.link-curso {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 18px;
-    text-decoration: none;
-    color: #2c3e50;
-    font-weight: bold;
-}
-
-.icono-curso {
-    background: #ebf5ff;
-    color: #3498db;
-    width: 38px;
-    height: 38px;
+/* Icono moderno */
+.icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #eef2ff;
+    color: #4f46e5;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
-    margin-right: 12px;
+    font-size: 1.2rem;
 }
 
-.flecha-accion {
-    color: #bbb;
-    font-size: 18px;
-    transition: 0.2s;
+/* Flecha */
+.arrow {
+    font-size: 1.4rem;
+    color: #adb5bd;
+    transition: transform .2s ease;
 }
 
-.curso-card:hover .flecha-accion {
-    color: #3498db;
-    transform: translateX(4px);
+.curso-card:hover .arrow {
+    transform: translateX(6px);
+    color: #212529;
+}
+
+/* Link volver */
+.volver-link {
+    color: #6c757d;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.volver-link:hover {
+    text-decoration: underline;
 }
 
 </style>
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet"
+href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
 {% endblock %}

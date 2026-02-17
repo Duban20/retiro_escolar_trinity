@@ -4,46 +4,104 @@
 Seleccionar Nivel Educativo
 {% endblock %}
 
-
 {% block content %}
 
-<div class="header-status">
-    <div>
-        <strong>Seleccionar Nivel Educativo</strong>
-    </div>
+<!-- HERO / CABECERA MODERNA -->
+<div class="text-center mb-5">
+    <h1 class="fw-bold display-6 mb-2">
+        Seleccionar Nivel
+    </h1>
+    <p class="text-muted">
+        Elija el nivel educativo para continuar
+    </p>
 </div>
 
-
-<ul style="
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
-    gap:15px;
-    list-style:none;
-    padding:0;
-">
+<!-- CONTENEDOR PRINCIPAL -->
+<div class="d-flex flex-column gap-4">
 
     {% for nivel in niveles %}
-        <li class="card" style="text-align:center;border-top:5px solid #3498db;">
-            <a href="{% url 'lista_grados' nivel.id %}"
-               style="
-                    display:block;
-                    padding:30px 10px;
-                    text-decoration:none;
-                    font-weight:bold;
-                    color:#2c3e50;
-                    font-size:1.1rem;
-               ">
-                {{ nivel.nombre }}
-            </a>
-        </li>
+        <a href="{% url 'lista_grados' nivel.id %}" 
+           class="nivel-link text-decoration-none">
+
+            <div class="nivel-card p-4 p-md-5">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <div>
+                        <h4 class="fw-semibold mb-1 text-dark">
+                            {{ nivel.nombre }}
+                        </h4>
+                        <small class="text-muted">
+                            Ver listado de cursos
+                        </small>
+                    </div>
+
+                    <div class="arrow">
+                        →
+                    </div>
+
+                </div>
+
+            </div>
+
+        </a>
     {% endfor %}
 
-</ul>
+</div>
 
-<div style="margin-top:20px;text-align:center;">
-    <a href="{% url 'seleccionar_rol' %}" style="color:#666;text-decoration:none;">
-        ← Volver atrás
+<!-- VOLVER -->
+<div class="text-center mt-5">
+    <a href="{% url 'seleccionar_rol' %}" 
+       class="volver-link">
+        ← Volver al inicio
     </a>
 </div>
+
+<style>
+
+/* Espaciado más aireado */
+.nivel-link {
+    display: block;
+}
+
+/* Tarjeta estilo premium */
+.nivel-card {
+    background: #ffffff;
+    border-radius: 1.25rem;
+    border: 1px solid #e9ecef;
+    transition: all .25s ease;
+}
+
+/* Hover elegante */
+.nivel-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.06);
+    border-color: #dee2e6;
+}
+
+/* Flecha minimal */
+.arrow {
+    font-size: 1.5rem;
+    color: #adb5bd;
+    transition: transform .2s ease;
+}
+
+.nivel-card:hover .arrow {
+    transform: translateX(6px);
+    color: #212529;
+}
+
+/* Link volver elegante */
+.volver-link {
+    color: #6c757d;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.volver-link:hover {
+    text-decoration: underline;
+}
+
+</style>
 
 {% endblock %}

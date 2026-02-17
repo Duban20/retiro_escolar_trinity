@@ -4,24 +4,23 @@
 
 {% block content %}
 
-<div class="header-status">
-    <h2>Bienvenido</h2>
+<div class="text-center mb-4">
+    <h2 class="fw-semibold">Bienvenido</h2>
+    <p class="text-muted mb-0">Seleccione su cargo para continuar</p>
 </div>
 
-<div class="card" style="text-align:center">
+<div class="d-grid gap-3">
 
-    <h2>Seleccione su cargo</h2>
-
-    <br>
-
-    <a class="btn btn-primary" href="{% url 'seleccionar_nivel' %}">
-        👮 Portería
+    <a href="{% url 'seleccionar_nivel' %}" 
+       class="btn btn-primary btn-lg rounded-4 py-3 shadow-sm">
+        <span class="fs-4 me-2">👮</span>
+        Portería
     </a>
 
-    <br><br>
-
-    <a class="btn btn-success" href="{% url 'docente_seleccionar_grado' %}">
-        👩‍🏫 Docente
+    <a href="{% url 'docente_seleccionar_grado' %}" 
+       class="btn btn-success btn-lg rounded-4 py-3 shadow-sm">
+        <span class="fs-4 me-2">👩‍🏫</span>
+        Docente
     </a>
 
 </div>
