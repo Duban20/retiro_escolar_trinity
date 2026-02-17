@@ -22,9 +22,9 @@
             <div id="contadorRetiros" class="text-muted small fw-medium">Cargando alumnos...</div>
         </div>
         <div class="col-auto">
-            <div class="live-status shadow-sm">
-                <span class="live-dot pulse-red"></span>
-                <span class="live-text">EN VIVO</span>
+            <div class="live-status-green shadow-sm">
+                <i class="bi bi-arrow-repeat spin-slow me-1"></i> 
+                <span class="live-text-green">EN ESPERA DE RETIROS</span>
             </div>
         </div>
     </div>
@@ -92,31 +92,41 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.03);
 }
 
-.live-status {
-    background: #fff;
-    border: 1px solid #fee2e2;
-    padding: 5px 12px;
+/* Contenedor con borde y fondo verde muy suave */
+.live-status-green {
+    background: #ffffff;
+    border: 1px solid #d1fae5; /* Verde suave */
+    padding: 5px 14px;
     border-radius: 50px;
     display: flex;
     align-items: center;
     gap: 6px;
 }
 
-.live-text {
+/* Texto en verde esmeralda */
+.live-text-green {
     font-size: 0.65rem;
     font-weight: 800;
-    color: #dc3545;
-    letter-spacing: 1px;
+    color: #10b981; /* Verde Success */
+    letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
-.live-dot { width: 8px; height: 8px; border-radius: 50%; background: #dc3545; }
+/* Icono rotatorio verde */
+.live-status-green i {
+    color: #10b981;
+    font-size: 0.85rem;
+    display: inline-block;
+}
 
-.pulse-red { animation: pulse-red-anim 2s infinite; }
+/* Animación de rotación suave */
+.spin-slow {
+    animation: rotation 3s linear infinite;
+}
 
-@keyframes pulse-red-anim {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
-    70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(220, 53, 69, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+@keyframes rotation {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* TARJETAS DE RETIRO */
