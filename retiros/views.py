@@ -25,7 +25,7 @@ def seleccionar_rol(request):
     return render(request, 'seleccionar_rol.html')
 
 # ===============================
-# 🔵 SECCIÓN ENTRADA (Portería)
+# SECCIÓN ENTRADA (Portería)
 # ===============================
 
 def seleccionar_nivel(request):
@@ -46,6 +46,7 @@ def lista_grados(request, nivel_id):
 
 def lista_alumnos(request, grado_id):
     grado = get_object_or_404(Grado, id=grado_id)
+    nivel = grado.nivel
 
     retiro_pendiente = Retiro.objects.filter(
         alumno=OuterRef('pk'),
@@ -56,13 +57,14 @@ def lista_alumnos(request, grado_id):
         Alumno.objects
         .filter(grado=grado, activo=True, en_colegio=True)
         .annotate(tiene_retiro=Exists(retiro_pendiente))
-        .order_by('nombre')   # ✅ orden alfabético
+        .order_by('nombre')   # orden alfabético
     )
 
     cantidad = alumnos.count()
 
     return render(request, 'lista_alumnos.html', {
         'grado': grado,
+        'nivel': nivel,
         'alumnos': alumnos,
         'cantidad': cantidad
     })
@@ -71,7 +73,7 @@ def lista_alumnos(request, grado_id):
 def crear_retiro(request, alumno_id):
     alumno = get_object_or_404(Alumno, id=alumno_id)
 
-    # 🔎 Verificar si ya existe retiro pendiente
+    # Verificar si ya existe retiro pendiente
     existe_pendiente = Retiro.objects.filter(
         alumno=alumno,
         estado='PENDIENTE'
@@ -79,9 +81,9 @@ def crear_retiro(request, alumno_id):
 
     if existe_pendiente:
         messages.warning(request, f"{alumno.nombre} ya tiene un retiro pendiente.")
-        return redirect('seleccionar_nivel') 
+        return redirect(request.META.get('HTTP_REFERER'))
 
-    # ✅ Crear retiro si no existe
+    # Crear retiro si no existe
     Retiro.objects.create(
         alumno=alumno,
         grado=alumno.grado,
@@ -89,13 +91,53 @@ def crear_retiro(request, alumno_id):
     )
 
     messages.success(request, f"Retiro avisado para {alumno.nombre}")
-    return redirect('seleccionar_nivel')
+    return redirect(request.META.get('HTTP_REFERER'))
 
 
-# ===============================
-# 🟢 SECCIÓN INTERNO (Preparación)
-# ===============================
+@require_POST
+def crear_retiros_masivos(request):
 
+    ids = request.POST.getlist('alumnos')
+
+    if not ids:
+        messages.warning(request, "No seleccionó alumnos.")
+        return redirect(request.META.get('HTTP_REFERER'))
+
+    alumnos = Alumno.objects.filter(id__in=ids)
+
+    creados = 0
+    repetidos = 0
+
+    for alumno in alumnos:
+
+        existe = Retiro.objects.filter(
+            alumno=alumno,
+            estado='PENDIENTE'
+        ).exists()
+
+        if existe:
+            repetidos += 1
+            continue
+
+        Retiro.objects.create(
+            alumno=alumno,
+            grado=alumno.grado,
+            estado='PENDIENTE'
+        )
+
+        creados += 1
+
+    if creados:
+        messages.success(request, f"{creados} retiros creados correctamente.")
+
+    if repetidos:
+        messages.warning(request, f"{repetidos} alumnos ya tenían retiro pendiente.")
+
+    return redirect(request.META.get('HTTP_REFERER'))
+
+
+
+# SECCIÓN INTERNO (Preparación)
 def lista_pendientes(request):
     retiros = Retiro.objects.filter(estado='PENDIENTE').order_by('hora_aviso')
 
@@ -181,44 +223,3 @@ def lista_pendientes_json(request, grado_id):
         })
 
     return JsonResponse({'retiros': data})
-
-@require_POST
-def crear_retiros_masivos(request):
-
-    ids = request.POST.getlist('alumnos')
-
-    if not ids:
-        messages.warning(request, "No seleccionó alumnos.")
-        return redirect(request.META.get('HTTP_REFERER'))
-
-    alumnos = Alumno.objects.filter(id__in=ids)
-
-    creados = 0
-    repetidos = 0
-
-    for alumno in alumnos:
-
-        existe = Retiro.objects.filter(
-            alumno=alumno,
-            estado='PENDIENTE'
-        ).exists()
-
-        if existe:
-            repetidos += 1
-            continue
-
-        Retiro.objects.create(
-            alumno=alumno,
-            grado=alumno.grado,
-            estado='PENDIENTE'
-        )
-
-        creados += 1
-
-    if creados:
-        messages.success(request, f"{creados} retiros creados correctamente.")
-
-    if repetidos:
-        messages.warning(request, f"{repetidos} alumnos ya tenían retiro pendiente.")
-
-    return redirect(request.META.get('HTTP_REFERER'))

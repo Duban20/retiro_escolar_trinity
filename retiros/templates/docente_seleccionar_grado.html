@@ -1,138 +1,210 @@
 {% extends "base.html" %}
 
-{% block title %}
-Seleccionar Curso
-{% endblock %}
+{% block title %} Seleccionar Curso {% endblock %}
 
 {% block content %}
 
-<!-- Encabezado moderno -->
-<div class="text-center mb-5">
-    <h1 class="fw-bold display-6 mb-2">
-        Seleccione su Curso
-    </h1>
-    <p class="text-muted">
-        Elija el curso para ver los retiros pendientes
+<div class="header-section text-center mb-5 animate-fade-in">
+    <span class="text-uppercase tracking-widest text-danger small fw-bold mb-2 d-block">Gestión Académica</span>
+    <h1 class="display-6 fw-bold text-dark mb-3">Mis Cursos</h1>
+    <p class="text-secondary mx-auto lh-lg" style="max-width: 450px; font-size: 0.95rem;">
+        Bienvenido al panel docente. Seleccione el aula para gestionar el flujo de retiros en tiempo real.
     </p>
 </div>
 
-<!-- Lista de cursos -->
-<div class="d-flex flex-column gap-4">
-
+<div class="row g-4">
     {% for grado in grados %}
-
-        <a href="{% url 'docente_pendientes' grado.id %}" 
-           class="text-decoration-none">
-
-            <div class="curso-card p-4">
-
-                <div class="d-flex align-items-center justify-content-between">
-
-                    <div class="d-flex align-items-center gap-3">
-
-                        <!-- Icono elegante -->
-                        <div class="icon-wrapper">
-                            <i class="bi bi-journal-bookmark-fill"></i>
+    <div class="col-12 col-md-6 col-lg-4 animate-item" style="--delay: {{ forloop.counter0 }}">
+        <a href="{% url 'docente_pendientes' grado.id %}" class="course-link">
+            <div class="minimal-card">
+                <div class="card-content">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="icon-sphere">
+                            <i class="bi bi-mortarboard-fill"></i>
                         </div>
-
-                        <div>
-                            <h5 class="fw-semibold text-dark mb-1">
-                                {{ grado.nombre }}
-                            </h5>
-                            <small class="text-muted">
-                                Acceder al curso
-                            </small>
+                        <div class="ms-auto">
+                            </div>
+                    </div>
+                    
+                    <div class="card-footer-info">
+                        <h5 class="course-title">{{ grado.nombre }}</h5>
+                        <div class="d-flex align-items-center mt-2">
+                            <span class="text-muted small">Ver retiros pendientes</span>
+                            <div class="arrow-wrapper">
+                                <i class="bi bi-arrow-right"></i>
+                            </div>
                         </div>
-
                     </div>
-
-                    <div class="arrow">
-                        →
-                    </div>
-
                 </div>
-
             </div>
-
         </a>
-
+    </div>
     {% empty %}
-
-        <div class="card border-0 shadow-sm text-center p-5">
-            <i class="bi bi-info-circle fs-2 text-muted mb-3"></i>
-            <p class="text-muted mb-0">
-                No tiene cursos asignados actualmente.
-            </p>
+    <div class="col-12 text-center py-5">
+        <div class="empty-state-minimal">
+            <div class="empty-icon-box mb-4">
+                <i class="bi bi-stack"></i>
+            </div>
+            <h5 class="fw-bold text-dark">No hay cursos asignados</h5>
+            <p class="text-muted small">Comuníquese con administración para vincular sus grados.</p>
         </div>
-
+    </div>
     {% endfor %}
-
 </div>
 
-<!-- Botón volver -->
-<div class="text-center mt-5">
-    <a href="{% url 'seleccionar_rol' %}" 
-       class="volver-link">
-        ← Volver atrás
+<div class="text-center mt-5 pt-4">
+    <a href="{% url 'seleccionar_rol' %}" class="back-action">
+        <i class="bi bi-arrow-left"></i>
+        <span>Cambiar de Rol</span>
     </a>
 </div>
 
-
 <style>
+/* FUENTE Y ESPACIADO */
+.tracking-widest { letter-spacing: 0.15em; }
 
-/* Tarjeta estilo premium */
-.curso-card {
+/* CARD ESTILO MINIMALISTA */
+.course-link { text-decoration: none !important; }
+
+.minimal-card {
     background: #ffffff;
-    border-radius: 1.25rem;
-    border: 1px solid #e9ecef;
-    transition: all .25s ease;
+    border: 1px solid #f0f0f0;
+    border-radius: 24px;
+    padding: 28px;
+    height: 100%;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
 }
 
-.curso-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.06);
+.minimal-card:hover {
+    transform: translateY(-8px);
+    background: #ffffff;
+    border-color: #fee2e2; /* Borde rojo suave */
+    box-shadow: 0 20px 25px -5px rgba(220, 53, 69, 0.08); /* Sombra con tinte rojo */
 }
 
-/* Icono moderno */
-.icon-wrapper {
+/* ICONO ESFERA - AHORA ROJO */
+.icon-sphere {
     width: 48px;
     height: 48px;
-    border-radius: 12px;
-    background: #eef2ff;
-    color: #4f46e5;
+    background: #fff5f5; /* Rojo suave */
+    color: #dc3545; /* Rojo institucional */
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1.25rem;
+    transition: all 0.3s ease;
 }
 
-/* Flecha */
-.arrow {
-    font-size: 1.4rem;
-    color: #adb5bd;
-    transition: transform .2s ease;
+.minimal-card:hover .icon-sphere {
+    background: #dc3545; /* Fondo rojo sólido al hover */
+    color: white;
 }
 
-.curso-card:hover .arrow {
-    transform: translateX(6px);
-    color: #212529;
+/* TÍTULOS */
+.course-title {
+    color: #1e293b;
+    font-weight: 700;
+    margin: 0;
+    font-size: 1.15rem;
 }
 
-/* Link volver */
-.volver-link {
-    color: #6c757d;
+/* INDICADOR DE ESTADO (Preservado) */
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #f1f5f9;
+    padding: 4px 10px;
+    border-radius: 10px;
+}
+
+.status-text {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.05em;
+}
+
+.pulse-dot {
+    width: 6px;
+    height: 6px;
+    background: #10b981;
+    border-radius: 50%;
+}
+
+/* FLECHA ANIMADA - AHORA ROJA */
+.arrow-wrapper {
+    margin-left: 8px;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.3s ease;
+    color: #dc3545; /* Color rojo */
+}
+
+.minimal-card:hover .arrow-wrapper {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* BOTÓN VOLVER - AHORA ROJO */
+.back-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: #94a3b8;
     text-decoration: none;
+    font-weight: 600;
     font-size: 0.9rem;
+    transition: color 0.3s ease;
 }
 
-.volver-link:hover {
-    text-decoration: underline;
+.back-action:hover {
+    color: #dc3545; /* Rojo al hover */
 }
 
+/* EMPTY STATE */
+.empty-state-minimal {
+    padding: 4rem 2rem;
+    border-radius: 32px;
+    background: #fcfcfc;
+    border: 1px dashed #e2e8f0;
+}
+
+.empty-icon-box {
+    font-size: 2.5rem;
+    color: #cbd5e1;
+}
+
+/* ANIMACIONES */
+.animate-fade-in {
+    animation: fadeIn 0.8s ease-out forwards;
+}
+
+.animate-item {
+    opacity: 0;
+    animation: fadeInUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    animation-delay: calc(var(--delay) * 0.1s);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from { 
+        opacity: 0; 
+        transform: translateY(30px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
 </style>
-
-<!-- Bootstrap Icons -->
-<link rel="stylesheet"
-href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
 {% endblock %}

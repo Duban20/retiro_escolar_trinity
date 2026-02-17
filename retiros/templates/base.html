@@ -3,116 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}TBS | Sistema de Retiros{% endblock %}</title>
 
-    <title>{% block title %}Sistema de Retiros{% endblock %}</title>
-
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Google Font (Moderna y elegante) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
+        :root {
+            --tbs-primary: #dc3545;
+            --tbs-dark: #1e293b;
+            --tbs-bg: #fdfdfe; /* Un blanco casi puro con un toque cálido */
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8f9fa;
+            background-color: var(--tbs-bg);
+            color: var(--tbs-dark);
+            -webkit-font-smoothing: antialiased;
         }
 
-        .navbar {
-            backdrop-filter: blur(8px);
+        /* NAVBAR ESTILO GLASSMORPHISM */
+        .navbar-minimal {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 1rem 0;
         }
 
-        .card {
-            border: none;
-            border-radius: 1rem;
+        .navbar-brand-tbs {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--tbs-dark) !important;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .shadow-soft {
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        .navbar-brand-tbs span {
+            color: var(--tbs-primary);
         }
 
+        /* CONTENEDOR DE ALERTAS REFINADO */
         .alert-container {
             position: fixed;
-            top: 1rem;
-            right: 1rem;
-            z-index: 1055;
-            width: 90%;
-            max-width: 350px;
+            top: 5rem;
+            right: 1.5rem;
+            z-index: 2000;
+            width: 320px;
+        }
+
+        .alert-modern {
+            border: none;
+            border-radius: 16px;
+            padding: 1rem 1.25rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* CONTENEDOR PRINCIPAL SIN BORDES FORZADOS */
+        .main-wrapper {
+            min-height: calc(100vh - 160px);
+            display: flex;
+            align-items: center;
+            padding: 2rem 0;
+        }
+
+        /* Quité el padding y fondo blanco de la card aquí 
+           para que las vistas internas manejen su propio diseño */
+        .content-card {
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* BOTÓN DE INICIO REFINADO */
+        .btn-home-minimal {
+            background: #f1f5f9;
+            color: #475569;
+            border: none;
+            border-radius: 50px;
+            padding: 8px 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        .btn-home-minimal:hover {
+            background: var(--tbs-primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Tamaño del logo para celulares (pantallas menores a 768px) */
+        @media (max-width: 768px) {
+            .navbar-logo {
+                height: 35px; /* Más pequeño en móvil para que no ocupe tanto espacio */
+            }
         }
     </style>
 </head>
 <body>
 
-<!-- 🔝 NAVBAR MODERNA -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm py-3">
+<nav class="navbar navbar-minimal sticky-top">
     <div class="container">
-        <span class="navbar-brand fw-semibold">
-            Sistema de Retiro Escolar TBS
-        </span>
+        <a class="navbar-brand navbar-brand-tbs" href="{% url 'seleccionar_rol' %}">
+            <img src="/static/img/escudo.png" height="40" alt="Logo TBS" class="navbar-logo">
+            TBS <span>Sistema de Retiros</span>
+        </a>
 
-        <a href="{% url 'seleccionar_rol' %}" class="btn btn-outline-light btn-sm rounded-pill px-3">
-            Inicio
+        <a href="{% url 'seleccionar_rol' %}" class="btn-home-minimal text-decoration-none">
+            <i class="bi bi-house-door me-2"></i>Inicio
         </a>
     </div>
 </nav>
 
-<!-- 🔔 ALERTAS -->
 <div class="alert-container">
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-soft" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show alert-modern bg-white text-dark" role="alert">
+                <div class="me-3 fs-4">
+                    {% if message.tags == 'success' %}<i class="bi bi-check-circle-fill text-success"></i>
+                    {% elif message.tags == 'danger' %}<i class="bi bi-exclamation-circle-fill text-danger"></i>
+                    {% else %}<i class="bi bi-info-circle-fill text-primary"></i>{% endif %}
+                </div>
+                <div class="small fw-medium">{{ message }}</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" style="font-size: 0.6rem;"></button>
             </div>
         {% endfor %}
     {% endif %}
 </div>
 
-<!-- 🎯 CONTENIDO PRINCIPAL -->
-<main class="container py-4">
-    <div class="mx-auto" style="max-width: 720px;">
-
-        <!-- Tarjeta contenedora elegante -->
-        <div class="card shadow-soft p-4 bg-white">
+<main class="container">
+    <div class="main-wrapper">
+        <div class="content-card" style="max-width: 850px;">
             {% block content %}
             {% endblock %}
         </div>
-
     </div>
 </main>
 
-<!-- 🔊 SONIDO -->
 <audio id="alertSound">
     <source src="https://www.soundjay.com/buttons/sounds/button-3.mp3" type="audio/mpeg">
 </audio>
 
-<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-/* Auto ocultar alertas después de 4s */
-setTimeout(() => {
-    document.querySelectorAll(".alert").forEach(el => {
-        const alert = bootstrap.Alert.getOrCreateInstance(el);
-        alert.close();
-    });
-}, 4000);
+    /* Auto ocultar alertas */
+    setTimeout(() => {
+        document.querySelectorAll(".alert").forEach(el => {
+            const alert = bootstrap.Alert.getOrCreateInstance(el);
+            alert.close();
+        });
+    }, 4500);
 
-/* Sonido */
-function reproducirSonido(){
-    const audio = document.getElementById("alertSound");
-    if(audio){
-        audio.currentTime = 0;
-        audio.play();
+    /* Sonido Global */
+    function reproducirSonido(){
+        const audio = document.getElementById("alertSound");
+        if(audio){
+            audio.currentTime = 0;
+            audio.play().catch(e => console.log("Audio bloqueado por navegador"));
+        }
     }
-}
 
-/* Vibración móvil */
-function vibrar(){
-    if(navigator.vibrate){
-        navigator.vibrate([300,150,300]);
+    /* Vibración */
+    function vibrar(){
+        if(navigator.vibrate){
+            navigator.vibrate([200, 100, 200]);
+        }
     }
-}
 </script>
 
 {% block scripts %}
