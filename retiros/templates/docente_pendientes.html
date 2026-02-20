@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% load static %}
+
 {% block title %} Panel de Retiros - {{ grado.nombre }} {% endblock %}
 
 {% block content %}
@@ -291,7 +293,6 @@ function verificarNuevosRetiros() {
             if (data.cantidad !== cantidadAnterior) {
                 cargarLista();
                 if (typeof reproducirSonido === "function") reproducirSonido();
-                if (typeof vibrar === "function") vibrar();
             }
             cantidadAnterior = data.cantidad;
         })
@@ -300,5 +301,26 @@ function verificarNuevosRetiros() {
 
 actualizarContador(cantidadAnterior);
 setInterval(verificarNuevosRetiros, 4000);
+
+function reproducirSonido() {
+    const audio = document.getElementById("alertaSonido");
+    if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(err => {
+            console.log("El navegador bloqueó el sonido automático.");
+        });
+    }
+}
+
+document.addEventListener("click", function activarAudio() {
+    const audio = document.getElementById("alertaSonido");
+    if (audio) audio.play().then(() => audio.pause());
+    document.removeEventListener("click", activarAudio);
+});
 </script>
+
+<audio id="alertaSonido" preload="auto">
+    <source src="{% static 'sounds/alerta.mp3' %}" type="audio/mpeg">
+</audio>
+
 {% endblock %}

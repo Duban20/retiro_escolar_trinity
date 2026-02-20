@@ -7,7 +7,17 @@
 <div class="text-center mb-5 mt-2 animate-fade-in">
     <span class="text-uppercase tracking-widest text-danger small fw-bold mb-2 d-block">Gestión Escolar</span>
     <h1 class="fw-bold h3 mb-2 text-dark">Seleccionar Nivel</h1>
-    <p class="text-muted small px-4">Elija el nivel educativo para desplegar los grados correspondientes</p>
+    <p class="text-muted small px-4">Elija el nivel educativo o use el buscador rápido</p>
+    
+    <div class="px-4 mt-3">
+        <button type="button" class="btn border-0 shadow-sm w-100 py-3 rounded-4 bg-white d-flex align-items-center justify-content-between px-4 search-trigger" data-bs-toggle="modal" data-bs-target="#searchModal">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-search text-danger fs-5 me-3"></i>
+                <span class="text-muted">Buscar alumno...</span>
+            </div>
+            <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2">Global</span>
+        </button>
+    </div>
 </div>
 
 <div class="row g-3">
@@ -106,6 +116,157 @@
         from { opacity: 0; transform: translateY(15px); }
         to { opacity: 1; transform: translateY(0); }
     }
+
+    /* Estilo del disparador de búsqueda */
+    .search-trigger {
+        transition: all 0.3s ease;
+        border: 1px solid #f1f5f9 !important;
+    }
+    .search-trigger:hover {
+        transform: scale(1.02);
+        box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.1) !important;
+        border-color: rgba(239, 68, 68, 0.2) !important;
+    }
+
+    /* Efecto Glassmorphism en el Modal */
+    .modal-blur {
+        backdrop-filter: blur(8px);
+        background-color: rgba(255, 255, 255, 0.7);
+    }
+
+    .modal-content-custom {
+        border-radius: 28px !important;
+        border: none !important;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .search-input-container {
+        background: #f8fafc;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .search-input-container:focus-within {
+        background: #fff;
+        border-color: #ef4444;
+        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+    }
+
+    /* Animación de entrada de resultados */
+    @keyframes slideInUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-item {
+        animation: slideInUp 0.4s ease forwards;
+        border-radius: 16px !important;
+        border: 1px solid #f1f5f9 !important;
+        margin-bottom: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .result-item:hover {
+        background-color: #fef2f2 !important;
+        border-color: #fecaca !important;
+        transform: translateX(5px);
+    }
 </style>
+
+<!-- MODAL BUSCADOR GLOBAL -->
+<div class="modal fade modal-blur" id="searchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm-fullscreen">
+        <div class="modal-content modal-content-custom">
+            <div class="modal-header border-0 pt-4 px-4">
+                <h5 class="fw-bold mb-0">Buscador de Alumnos</h5>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="search-input-container d-flex align-items-center px-3 py-2 rounded-4 mb-4">
+                    <i class="bi bi-search text-muted fs-5 me-2"></i>
+                    <input type="text" id="inputBusqueda" class="form-control border-0 bg-transparent shadow-none py-2" 
+                           placeholder="Escribe para buscar..." autocomplete="off">
+                </div>
+                
+                <div id="resultadosBusqueda" class="overflow-auto" style="max-height: 400px; scrollbar-width: none;">
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-person-badge fs-1 opacity-25"></i>
+                        <p class="small mt-2">Busca por nombre o grado</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('inputBusqueda');
+    const contenedor = document.getElementById('resultadosBusqueda');
+    let timeout = null;
+
+    input.addEventListener('input', function() {
+        clearTimeout(timeout);
+        const query = this.value.trim();
+
+        if (query.length < 2) {
+            contenedor.innerHTML = `
+                <div class="text-center py-5 text-muted animate-fade-in">
+                    <i class="bi bi-person-badge fs-1 opacity-25"></i>
+                    <p class="small mt-2">Escribe al menos 2 letras...</p>
+                </div>`;
+            return;
+        }
+
+        // Debounce de 300ms para mejorar rendimiento
+        timeout = setTimeout(() => {
+            fetch(`{% url 'buscar_alumnos_ajax' %}?q=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    contenedor.innerHTML = '';
+                    
+                    if (data.results.length === 0) {
+                        contenedor.innerHTML = `
+                            <div class="text-center py-5 animate-fade-in">
+                                <i class="bi bi-emoji-frown fs-1 text-muted opacity-25"></i>
+                                <p class="text-muted mt-2">No se encontraron resultados</p>
+                            </div>`;
+                        return;
+                    }
+
+                    data.results.forEach((a, index) => {
+                        const actionUrl = `{% url 'crear_retiro' 0 %}`.replace('0', a.id);
+                        const delay = index * 0.05; // Retraso escalonado
+                        
+                        const item = `
+                            <a href="${actionUrl}" class="list-group-item list-group-item-action result-item d-flex align-items-center justify-content-between p-3" 
+                               style="animation-delay: ${delay}s">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-person"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold text-dark">${a.nombre}</h6>
+                                        <small class="text-muted">${a.grado}</small>
+                                    </div>
+                                </div>
+                                ${a.tiene_pendiente 
+                                    ? '<span class="badge rounded-pill bg-warning text-dark fw-normal">Pendiente</span>' 
+                                    : '<i class="bi bi-chevron-right text-muted small"></i>'}
+                            </a>
+                        `;
+                        contenedor.insertAdjacentHTML('beforeend', item);
+                    });
+                });
+        }, 300);
+    });
+
+    // Auto-focus al abrir el modal
+    const searchModal = document.getElementById('searchModal');
+    searchModal.addEventListener('shown.bs.modal', () => {
+        input.focus();
+    });
+});
+</script>
 
 {% endblock %}

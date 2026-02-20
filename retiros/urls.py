@@ -11,6 +11,7 @@ urlpatterns = [
     path('grado/<int:grado_id>/', views.lista_alumnos, name='lista_alumnos'),
     path('retiro/<int:alumno_id>/', views.crear_retiro, name='crear_retiro'),
     path('retiros/masivos/', views.crear_retiros_masivos, name='crear_retiros_masivos'),
+    path('buscar-alumnos/', views.buscar_alumnos_ajax, name='buscar_alumnos_ajax'),
 
     # Docente
     path('docente/', views.docente_seleccionar_grado, name='docente_seleccionar_grado'),

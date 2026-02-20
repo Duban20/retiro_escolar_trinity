@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 from .models import Nivel, Grado, Alumno, Retiro
 from django.contrib import messages
-from django.db.models import Exists, OuterRef, Count
+from django.db.models import Exists, OuterRef, Q
 from django.utils import timezone
 from django.http import JsonResponse
 
@@ -223,3 +223,32 @@ def lista_pendientes_json(request, grado_id):
         })
 
     return JsonResponse({'retiros': data})
+
+
+# Buscador global
+def buscar_alumnos_ajax(request):
+    query = request.GET.get('q', '')
+    if len(query) < 2: # No buscar si hay menos de 2 letras
+        return JsonResponse({'results': []})
+
+    # Buscamos alumnos activos, en colegio y que no tengan retiro pendiente
+    # Filtramos por nombre y también por el nombre del grado
+    alumnos = Alumno.objects.filter(
+        Q(nombre__icontains=query) | Q(grado__nombre__icontains=query),
+        activo=True,
+        en_colegio=True
+    ).select_related('grado')[:10] # Limitamos a 10 resultados por rendimiento
+
+    results = []
+    for a in alumnos:
+        # Verificamos si ya tiene un retiro pendiente
+        tiene_pendiente = Retiro.objects.filter(alumno=a, estado='PENDIENTE').exists()
+        
+        results.append({
+            'id': a.id,
+            'nombre': a.nombre,
+            'grado': a.grado.nombre,
+            'tiene_pendiente': tiene_pendiente
+        })
+
+    return JsonResponse({'results': results})
