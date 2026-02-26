@@ -286,31 +286,65 @@ function cargarLista() {
         });
 }
 
+// function verificarNuevosRetiros() {
+//     fetch(`/docente/${gradoId}/cantidad/`)
+//         .then(res => res.json())
+//         .then(data => {
+//             if (data.cantidad !== cantidadAnterior) {
+//                 cargarLista();
+//                 if (typeof reproducirSonido === "function") reproducirSonido();
+//             }
+//             cantidadAnterior = data.cantidad;
+//         })
+//         .catch(() => console.log("Reconectando con el servidor..."));
+// }
+
+let retirosAnteriores = [];
+
 function verificarNuevosRetiros() {
-    fetch(`/docente/${gradoId}/cantidad/`)
+    fetch(`/docente/${gradoId}/lista/`)
         .then(res => res.json())
         .then(data => {
-            if (data.cantidad !== cantidadAnterior) {
+
+            const retirosActuales = data.retiros;
+
+            // Detectar nuevos por ID
+            const nuevos = retirosActuales.filter(r =>
+                !retirosAnteriores.some(prev => prev.id === r.id)
+            );
+
+            if (nuevos.length > 0) {
+
                 cargarLista();
-                if (typeof reproducirSonido === "function") reproducirSonido();
+
+                nuevos.forEach(r => {
+                    hablar(r.nombre);
+                });
+
+                // if (typeof reproducirSonido === "function") {
+                //     reproducirSonido();
+                // }
             }
-            cantidadAnterior = data.cantidad;
+
+            retirosAnteriores = retirosActuales;
+            cantidadAnterior = retirosActuales.length;
         })
         .catch(() => console.log("Reconectando con el servidor..."));
 }
 
+
 actualizarContador(cantidadAnterior);
 setInterval(verificarNuevosRetiros, 4000);
 
-function reproducirSonido() {
-    const audio = document.getElementById("alertaSonido");
-    if (audio) {
-        audio.currentTime = 0;
-        audio.play().catch(err => {
-            console.log("El navegador bloqueó el sonido automático.");
-        });
-    }
-}
+// function reproducirSonido() {
+//     const audio = document.getElementById("alertaSonido");
+//     if (audio) {
+//         audio.currentTime = 0;
+//         audio.play().catch(err => {
+//             console.log("El navegador bloqueó el sonido automático.");
+//         });
+//     }
+// }
 
 document.addEventListener("click", function activarAudio() {
     const audio = document.getElementById("alertaSonido");
@@ -319,8 +353,75 @@ document.addEventListener("click", function activarAudio() {
 });
 </script>
 
-<audio id="alertaSonido" preload="auto">
+<!-- <audio id="alertaSonido" preload="auto">
     <source src="{% static 'sounds/alerta.mp3' %}" type="audio/mpeg">
-</audio>
+</audio> -->
 
+<!-- Pantalla activa -->
+ <script>
+let wakeLock = null;
+
+async function activarWakeLock() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+            console.log("Wake Lock activado");
+
+            wakeLock.addEventListener('release', () => {
+                console.log("Wake Lock liberado");
+            });
+        }
+    } catch (err) {
+        console.error(`No se pudo activar Wake Lock: ${err.message}`);
+    }
+}
+
+// Reactivar si el usuario vuelve a la pestaña
+document.addEventListener("visibilitychange", async () => {
+    if (wakeLock !== null && document.visibilityState === "visible") {
+        activarWakeLock();
+    }
+});
+
+// Activar cuando carga la página
+document.addEventListener("DOMContentLoaded", activarWakeLock);
+</script>
+
+<!-- Texto a voz -->
+<script>
+function hablar(nombre) {
+
+    if (!('speechSynthesis' in window)) return;
+
+    const texto = `Atención. Llegaron por ${nombre}.`;
+
+    const mensaje = new SpeechSynthesisUtterance(texto);
+
+    mensaje.lang = "es-US";
+    mensaje.rate = 0.8;
+    mensaje.pitch = 0.95;
+    mensaje.volume = 1;
+
+    function asignarVozYHablar() {
+        const voces = speechSynthesis.getVoices();
+
+        const vozGoogleUS = voces.find(voz =>
+            voz.name === "Google español de Estados Unidos"
+        );
+
+        if (vozGoogleUS) {
+            mensaje.voice = vozGoogleUS;
+        }
+
+        speechSynthesis.speak(mensaje);
+    }
+
+    // Algunas veces las voces aún no están cargadas
+    if (speechSynthesis.getVoices().length === 0) {
+        speechSynthesis.onvoiceschanged = asignarVozYHablar;
+    } else {
+        asignarVozYHablar();
+    }
+}
+</script>
 {% endblock %}
