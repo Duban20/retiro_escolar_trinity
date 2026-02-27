@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
         clearTimeout(timeout);
         const query = this.value.trim();
 
-        if (query.length < 2) {
+        if (query.length < 2 && isNaN(query)) {
             contenedor.innerHTML = `
                 <div class="text-center py-5 text-muted animate-fade-in">
                     <i class="bi bi-person-badge fs-1 opacity-25"></i>
@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Debounce de 300ms para mejorar rendimiento
         timeout = setTimeout(() => {
-            fetch(`{% url 'buscar_alumnos_ajax' %}?q=${query}`)
+            fetch(`{% url 'buscar_alumnos_ajax' %}?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
                     contenedor.innerHTML = '';

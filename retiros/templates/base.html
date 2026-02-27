@@ -91,9 +91,9 @@
 
         /* BOTÓN DE INICIO REFINADO */
         .btn-home-minimal {
-            background: #f1f5f9;
+            /* background: #f1f5f9; */
             color: #475569;
-            border: none;
+            /* border: none; */
             border-radius: 50px;
             padding: 8px 20px;
             font-weight: 600;
@@ -117,7 +117,7 @@
 </head>
 <body>
 
-<nav class="navbar navbar-minimal sticky-top">
+<!-- <nav class="navbar navbar-minimal sticky-top">
     <div class="container">
         <a class="navbar-brand navbar-brand-tbs" href="{% url 'seleccionar_rol' %}">
             <img src="{% static 'icons/escudo.png' %}" height="40" alt="Logo TBS">
@@ -127,6 +127,79 @@
         <a href="{% url 'seleccionar_rol' %}" class="btn-home-minimal text-decoration-none">
             <i class="bi bi-house-door me-2"></i>Inicio
         </a>
+    </div>
+</nav> -->
+
+<nav class="navbar navbar-expand-lg navbar-minimal sticky-top">
+    <div class="container">
+
+        <!-- Logo -->
+        <a class="navbar-brand navbar-brand-tbs mb-0" href="{% url 'seleccionar_rol' %}">
+            <img src="{% static 'icons/escudo.png' %}" 
+                 class="navbar-logo" 
+                 height="40" 
+                 alt="Logo TBS">
+            TBS <span>Dismissal</span>
+        </a>
+
+        <!-- Botón hamburguesa -->
+        <button class="navbar-toggler border-0 shadow-none" 
+                type="button" 
+                data-bs-toggle="collapse" 
+                data-bs-target="#navbarTBS" 
+                aria-controls="navbarTBS" 
+                aria-expanded="false" 
+                aria-label="Toggle navigation">
+            <i class="bi bi-list fs-2"></i>
+        </button>
+
+        <!-- Contenido colapsable -->
+        <div class="collapse navbar-collapse justify-content-end" id="navbarTBS">
+
+            <div class="d-flex flex-column flex-lg-row 
+                        align-items-center 
+                        justify-content-center justify-content-lg-end 
+                        text-center text-lg-start
+                        gap-3 mt-3 mt-lg-0 w-100">
+
+                {% if user.is_authenticated %}
+
+                    <!-- Usuario -->
+                    <span class="small fw-semibold text-muted">
+                        <i class="bi bi-person-circle me-1"></i>
+                        {{ user.username }}
+                    </span>
+
+                    <!-- Inicio -->
+                    <a href="{% url 'seleccionar_rol' %}" 
+                       class="btn-home-minimal text-decoration-none text-center">
+                        <i class="bi bi-house-door fs-5"></i>
+                        <span class="ms-2 d-lg-none">Inicio</span>
+                    </a>
+
+                    <!-- Logout -->
+                    <form method="post" action="{% url 'logout' %}" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-home-minimal border-0 bg-transparent">
+                            <i class="bi bi-box-arrow-right fs-5"></i>
+                            <span class="ms-2 d-lg-none">Salir</span>
+                        </button>
+                    </form>
+
+                {% else %}
+
+                    <!-- Login -->
+                    <a href="{% url 'login' %}" 
+                       class="btn-home-minimal text-decoration-none text-center">
+                        <i class="bi bi-person-circle fs-5"></i>
+                        <span class="ms-2 d-lg-none">Iniciar sesión</span>
+                    </a>
+
+                {% endif %}
+
+            </div>
+        </div>
+
     </div>
 </nav>
 

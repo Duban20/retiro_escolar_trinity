@@ -1,10 +1,10 @@
 {
   "name": "TBS Dismissal",
-  "short_name": "TBS",
+  "short_name": "Dismissal",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0d6efd",
+  "theme_color": "#dc3545",
   "orientation": "portrait",
   "icons": [
     {
@@ -13,7 +13,7 @@
       "type": "image/png"
     },
     {
-      "src": "/static/icons/icon-512.png",
+      "src": "/static/icons/dismiss.png",
       "sizes": "512x512",
       "type": "image/png"
     }

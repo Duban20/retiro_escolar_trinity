@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from .models import Nivel, Grado, Alumno, Retiro
 from django.contrib import messages
@@ -17,7 +18,7 @@ def reset_diario_alumnos():
         )
 
 
-
+@login_required
 def seleccionar_rol(request):
 
     reset_diario_alumnos()   # reset automático
@@ -28,12 +29,14 @@ def seleccionar_rol(request):
 # SECCIÓN ENTRADA (Portería)
 # ===============================
 
+@login_required
 def seleccionar_nivel(request):
     reset_diario_alumnos()
     niveles = Nivel.objects.filter(activo=True)
     return render(request, 'seleccionar_nivel.html', {'niveles': niveles})
 
 
+@login_required
 def lista_grados(request, nivel_id):
     nivel = get_object_or_404(Nivel, id=nivel_id)
     grados = Grado.objects.filter(nivel=nivel, activo=True).order_by('orden')
@@ -44,6 +47,7 @@ def lista_grados(request, nivel_id):
     })
 
 
+@login_required
 def lista_alumnos(request, grado_id):
     grado = get_object_or_404(Grado, id=grado_id)
     nivel = grado.nivel
@@ -70,6 +74,7 @@ def lista_alumnos(request, grado_id):
     })
 
 
+@login_required
 def crear_retiro(request, alumno_id):
     alumno = get_object_or_404(Alumno, id=alumno_id)
 
@@ -95,6 +100,7 @@ def crear_retiro(request, alumno_id):
 
 
 @require_POST
+@login_required
 def crear_retiros_masivos(request):
 
     ids = request.POST.getlist('alumnos')
@@ -138,6 +144,7 @@ def crear_retiros_masivos(request):
 
 
 # SECCIÓN INTERNO (Preparación)
+@login_required
 def lista_pendientes(request):
     retiros = Retiro.objects.filter(estado='PENDIENTE').order_by('hora_aviso')
 
@@ -146,6 +153,7 @@ def lista_pendientes(request):
     })
 
 
+@login_required
 def marcar_entregado(request, retiro_id):
     retiro = get_object_or_404(Retiro, id=retiro_id)
 
@@ -168,9 +176,9 @@ def marcar_entregado(request, retiro_id):
 
 
 # ===============================
-# 🟣 SECCIÓN DOCENTE
+# SECCIÓN DOCENTE
 # ===============================
-
+@login_required
 def docente_seleccionar_grado(request):
     grados = Grado.objects.filter(activo=True).order_by('orden')
     return render(request, 'docente_seleccionar_grado.html', {
@@ -178,6 +186,7 @@ def docente_seleccionar_grado(request):
     })
 
 
+@login_required
 def docente_pendientes(request, grado_id):
 
     grado = get_object_or_404(Grado, id=grado_id)
@@ -199,6 +208,7 @@ def docente_pendientes(request, grado_id):
 
     
 
+@login_required
 def cantidad_pendientes(request, grado_id):
     cantidad = Retiro.objects.filter(
         estado='PENDIENTE',
@@ -208,6 +218,7 @@ def cantidad_pendientes(request, grado_id):
     return JsonResponse({'cantidad': cantidad})
 
 
+@login_required
 def lista_pendientes_json(request, grado_id):
     retiros = Retiro.objects.filter(
         estado='PENDIENTE',
@@ -226,29 +237,52 @@ def lista_pendientes_json(request, grado_id):
 
 
 # Buscador global
+@login_required
 def buscar_alumnos_ajax(request):
-    query = request.GET.get('q', '')
-    if len(query) < 2: # No buscar si hay menos de 2 letras
+    query = request.GET.get('q', '').strip()
+
+    if not query:
         return JsonResponse({'results': []})
 
-    # Buscamos alumnos activos, en colegio y que no tengan retiro pendiente
-    # Filtramos por nombre y también por el nombre del grado
-    alumnos = Alumno.objects.filter(
-        Q(nombre__icontains=query) | Q(grado__nombre__icontains=query),
-        activo=True,
-        en_colegio=True
-    ).select_related('grado')[:10] # Limitamos a 10 resultados por rendimiento
+    # Permitir 1 carácter si es número (para grados)
+    if len(query) < 2 and not query.isdigit():
+        return JsonResponse({'results': []})
 
-    results = []
-    for a in alumnos:
-        # Verificamos si ya tiene un retiro pendiente
-        tiene_pendiente = Retiro.objects.filter(alumno=a, estado='PENDIENTE').exists()
-        
-        results.append({
+    palabras = query.split()
+
+    filtros = Q()
+
+    for palabra in palabras:
+        filtros &= (
+            Q(nombre__icontains=palabra) |
+            Q(grado__nombre__icontains=palabra)
+        )
+
+    retiro_pendiente = Retiro.objects.filter(
+        alumno=OuterRef('pk'),
+        estado='PENDIENTE'
+    )
+
+    alumnos = (
+        Alumno.objects
+        .filter(
+            filtros,
+            activo=True,
+            en_colegio=True
+        )
+        .annotate(tiene_pendiente=Exists(retiro_pendiente))
+        .select_related('grado')
+        .order_by('nombre')[:15]
+    )
+
+    results = [
+        {
             'id': a.id,
             'nombre': a.nombre,
             'grado': a.grado.nombre,
-            'tiene_pendiente': tiene_pendiente
-        })
+            'tiene_pendiente': a.tiene_pendiente
+        }
+        for a in alumnos
+    ]
 
     return JsonResponse({'results': results})

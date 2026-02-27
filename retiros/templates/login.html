@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Iniciar Sesión | TBS{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Centrado completo del login */
+    .login-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        min-height: calc(100vh - 180px);
+    }
+
+    /* Card moderna */
+    .login-card-modern {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(18px);
+        border-radius: 28px;
+        padding: 3rem 2.5rem;
+        width: 100%;
+        max-width: 460px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.08);
+        animation: fadeUp 0.5s ease;
+    }
+
+    /* Animación suave */
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Centrado interno del formulario */
+    .login-form-inner {
+        max-width: 320px;
+        margin: 0 auto;
+    }
+
+    /* Inputs más elegantes */
+    .login-card-modern input {
+        width: 100%;
+        border-radius: 14px;
+        padding: 0.65rem 0.9rem;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+    }
+
+    .login-card-modern input:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.15rem rgba(220, 53, 69, 0.15);
+        outline: none;
+    }
+</style>
+
+<div class="login-wrapper">
+    <div class="login-card-modern">
+
+        <!-- Logo + Título -->
+        <div class="text-center mb-4">
+            <img src="{% static 'icons/escudo.png' %}" height="65" class="mb-3">
+            <h4 class="fw-bold mb-1">TBS Dismissal</h4>
+            <p class="text-muted small mb-0">Sistema de Control de Retiros</p>
+        </div>
+
+        <!-- Formulario -->
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="login-form-inner">
+
+                <div class="mb-4">
+                    <label for="id_username"
+                           class="form-label fw-semibold small text-muted mb-2 d-block">
+                        Usuario
+                    </label>
+                    {{ form.username }}
+                </div>
+
+                <div class="mb-4">
+                    <label for="id_password"
+                           class="form-label fw-semibold small text-muted mb-2 d-block">
+                        Contraseña
+                    </label>
+                    {{ form.password }}
+                </div>
+
+                <button type="submit"
+                        class="btn btn-danger w-100 rounded-pill py-2 fw-semibold">
+                    Ingresar
+                </button>
+
+            </div>
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}
