@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
+{% load static %}
 <head>
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'icons/escudo.png' %}">
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#0d6efd">
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}TBS | Sistema de Retiros{% endblock %}</title>
@@ -115,7 +120,7 @@
 <nav class="navbar navbar-minimal sticky-top">
     <div class="container">
         <a class="navbar-brand navbar-brand-tbs" href="{% url 'seleccionar_rol' %}">
-            <img src="/static/img/escudo.png" height="40" alt="Logo TBS" class="navbar-logo">
+            <img src="{% static 'icons/escudo.png' %}" height="40" alt="Logo TBS">
             TBS <span>Sistema de Retiros</span>
         </a>
 
@@ -164,6 +169,18 @@
 
 {% block scripts %}
 {% endblock %}
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/static/service-worker.js')
+      .then(function(registration) {
+        console.log('Service Worker registrado:', registration);
+      })
+      .catch(function(error) {
+        console.log('Error al registrar SW:', error);
+      });
+  }
+</script>
 
 </body>
 </html>
