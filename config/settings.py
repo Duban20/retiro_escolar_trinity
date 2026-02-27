@@ -29,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = True
 
-ALLOWED_HOSTS = ['187.77.54.72', '72.62.86.17', 'localhost', '127.0.0.1','192.168.1.26']
+ALLOWED_HOSTS = ['tbsdismissal.tech', '72.62.86.17', 'localhost', '127.0.0.1','192.168.1.26']
 
 
 # Application definition
