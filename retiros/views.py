@@ -8,10 +8,28 @@ from django.utils import timezone
 from django.http import JsonResponse
 
 
+# def reset_diario_alumnos():
+#     hoy = timezone.localdate()
+
+#     if not Alumno.objects.filter(fecha_estado=hoy).exists():
+#         Alumno.objects.update(
+#             en_colegio=True,
+#             fecha_estado=hoy
+#         )
+
 def reset_diario_alumnos():
     hoy = timezone.localdate()
 
+    # Si no hay alumnos con la fecha de hoy, significa que es el primer acceso del día
     if not Alumno.objects.filter(fecha_estado=hoy).exists():
+        
+        # 1. Marcar todos los retiros pendientes (de días anteriores) como ENTREGADOS
+        Retiro.objects.filter(estado='PENDIENTE').update(
+            estado='ENTREGADO',
+            hora_entrega=timezone.now()
+        )
+
+        # 2. Volver a habilitar a todos los alumnos (ponerlos en el colegio)
         Alumno.objects.update(
             en_colegio=True,
             fecha_estado=hoy
