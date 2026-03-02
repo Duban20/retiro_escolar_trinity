@@ -79,7 +79,7 @@ def lista_alumnos(request, grado_id):
         .order_by('nombre')   # orden alfabético
     )
 
-    cantidad = alumnos.count()
+    cantidad = alumnos.filter(en_colegio=True).count()
 
     return render(request, 'lista_alumnos.html', {
         'grado': grado,
