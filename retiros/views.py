@@ -47,12 +47,13 @@ def seleccionar_rol(request):
 # SECCIÓN ENTRADA (Portería)
 # ===============================
 
+@login_required
 def seleccionar_nivel(request):
     reset_diario_alumnos()
     niveles = Nivel.objects.filter(activo=True)
     return render(request, 'seleccionar_nivel.html', {'niveles': niveles})
 
-
+@login_required
 def lista_grados(request, nivel_id):
     nivel = get_object_or_404(Nivel, id=nivel_id)
     grados = Grado.objects.filter(nivel=nivel, activo=True).order_by('orden')
@@ -62,7 +63,7 @@ def lista_grados(request, nivel_id):
         'grados': grados
     })
 
-
+@login_required
 def lista_alumnos(request, grado_id):
     grado = get_object_or_404(Grado, id=grado_id)
     nivel = grado.nivel
@@ -89,6 +90,7 @@ def lista_alumnos(request, grado_id):
     })
 
 
+@login_required
 def crear_retiro(request, alumno_id):
     alumno = get_object_or_404(Alumno, id=alumno_id)
 
@@ -113,6 +115,7 @@ def crear_retiro(request, alumno_id):
     return redirect(request.META.get('HTTP_REFERER'))
 
 
+@login_required
 @require_POST
 def crear_retiros_masivos(request):
 
@@ -157,6 +160,7 @@ def crear_retiros_masivos(request):
 
 
 # SECCIÓN INTERNO (Preparación)
+@login_required
 def lista_pendientes(request):
     retiros = Retiro.objects.filter(estado='PENDIENTE').order_by('hora_aviso')
 
@@ -165,6 +169,7 @@ def lista_pendientes(request):
     })
 
 
+@login_required
 def marcar_entregado(request, retiro_id):
     retiro = get_object_or_404(Retiro, id=retiro_id)
 
@@ -189,7 +194,7 @@ def marcar_entregado(request, retiro_id):
 # ===============================
 # 🟣 SECCIÓN DOCENTE
 # ===============================
-
+@login_required
 def docente_seleccionar_grado(request):
     grados = Grado.objects.filter(activo=True).order_by('orden')
     return render(request, 'docente_seleccionar_grado.html', {
@@ -197,6 +202,7 @@ def docente_seleccionar_grado(request):
     })
 
 
+@login_required
 def docente_pendientes(request, grado_id):
 
     grado = get_object_or_404(Grado, id=grado_id)
@@ -217,7 +223,7 @@ def docente_pendientes(request, grado_id):
     })
 
     
-
+@login_required
 def cantidad_pendientes(request, grado_id):
     cantidad = Retiro.objects.filter(
         estado='PENDIENTE',
@@ -227,6 +233,7 @@ def cantidad_pendientes(request, grado_id):
     return JsonResponse({'cantidad': cantidad})
 
 
+@login_required
 def lista_pendientes_json(request, grado_id):
     retiros = Retiro.objects.filter(
         estado='PENDIENTE',
@@ -245,6 +252,7 @@ def lista_pendientes_json(request, grado_id):
 
 
 # Buscador global
+@login_required
 def buscar_alumnos_ajax(request):
     query = request.GET.get('q', '').strip()
 
