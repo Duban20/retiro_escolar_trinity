@@ -1,57 +1,106 @@
 {% extends "base.html" %}
 
-{% block title %} Seleccionar Nivel Educativo {% endblock %}
+{% block title %} Panel de Retiros {% endblock %}
 
 {% block content %}
 
-<div class="text-center mb-5 mt-2 animate-fade-in">
+<div class="text-center mb-5 mt-3 animate-fade-in">
+    <!-- <div class="d-inline-block px-3 py-1 bg-danger bg-opacity-10 text-danger rounded-pill small fw-bold tracking-widest mb-3">
+        <i class="bi bi-shield-check me-1"></i> GESTIÓN ESCOLAR
+    </div> -->
     <span class="text-uppercase tracking-widest text-danger small fw-bold mb-2 d-block">Gestión Escolar</span>
-    <h1 class="fw-bold h3 mb-2 text-dark">Seleccionar Nivel</h1>
-    <p class="text-muted small px-4">Elija el nivel educativo o use el buscador rápido</p>
-    
-    <div class="px-4 mt-3">
-        <button type="button" class="btn border-0 shadow-sm w-100 py-3 rounded-4 bg-white d-flex align-items-center justify-content-between px-4 search-trigger" data-bs-toggle="modal" data-bs-target="#searchModal">
-            <div class="d-flex align-items-center">
-                <i class="bi bi-search text-danger fs-5 me-3"></i>
-                <span class="text-muted">Buscar alumno...</span>
+    <h1 class="fw-bold h2 mb-2 text-dark" style="letter-spacing: -0.5px;">Panel de Retiros</h1>
+    <p class="text-muted px-4">Utiliza la búsqueda rápida o navega por los niveles</p>
+</div>
+
+<div class="card main-search-card border-0 mb-5 animate-fade-in" style="animation-delay: 0.1s;">
+    <div class="card-body p-sm-5 p-4">
+        
+        <div class="search-input-container d-flex align-items-center px-4 py-2 mb-4">
+            <i class="bi bi-search text-danger fs-4 me-3"></i>
+            <input type="text" id="inputBusqueda" class="form-control border-0 bg-transparent shadow-none py-3 fs-5" 
+                   placeholder="Nombre del alumno..." autocomplete="off">
+            
+            <i class="bi bi-x-circle-fill text-muted fs-5 ms-2 d-none" id="btnLimpiarBusqueda" 
+               style="cursor: pointer; transition: 0.2s;" 
+               onmouseover="this.classList.replace('text-muted', 'text-danger')" 
+               onmouseout="this.classList.replace('text-danger', 'text-muted')"></i>
+        </div>
+
+        <form id="formBuscadorMasivo" method="POST" action="{% url 'crear_retiros_masivos' %}">
+            {% csrf_token %}
+            
+            <div id="contenedorSeleccionados" class="d-flex flex-wrap gap-2 mb-4"></div>
+            <div id="inputsOcultos"></div>
+            
+            <div id="footerMasivo" style="display: none;" class="mb-4">
+                <button type="submit" id="btnSubmitMasivo" class="btn btn-danger btn-masivo w-100 rounded-pill fw-bold py-3 fs-5 shadow-lg">
+                    <i class="bi bi-megaphone-fill me-2 mb-1"></i> Avisar a <span id="contadorSeleccionados" class="badge bg-white text-danger ms-1">0</span> alumnos
+                </button>
             </div>
-            <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2">Global</span>
-        </button>
+        </form>
+
+        <div id="resultadosBusqueda" class="resultados-wrapper p-2" style="max-height: 420px; overflow-y: auto;">
+            <div class="text-center py-5" id="estadoInicialBusqueda">
+                <i class="bi bi-search mb-3 d-block" style="font-size: 1.8rem; color: #cbd5e1;"></i>
+                <h6 class="fw-bold text-dark mb-1">Búsqueda Rápida</h6>
+                <p class="text-muted small mb-0" style="letter-spacing: 0.5px;">Ingresa el nombre del estudiante</p>
+            </div>
+        </div>
+
+        <!-- <div id="resultadosBusqueda" class="resultados-wrapper p-2" style="max-height: 420px; overflow-y: auto;">
+            <div class="text-center py-5 text-muted" id="estadoInicialBusqueda">
+                <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-sm" style="width: 80px; height: 80px;">
+                    <i class="bi bi-lightning-charge-fill fs-1 text-danger opacity-75"></i>
+                </div>
+                <h6 class="fw-bold text-dark mb-1">Búsqueda Rápida</h6>
+                <p class="small text-muted mb-0">Escribe para encontrar alumnos al instante</p>
+            </div>
+        </div> -->
+
     </div>
 </div>
 
-<div class="row g-3">
-    {% for nivel in niveles %}
-    <div class="col-12 animate-item" style="--delay: {{ forloop.counter0 }}">
-        <a href="{% url 'lista_grados' nivel.id %}" class="text-decoration-none nivel-wrapper">
-            <div class="card nivel-card border-0 p-3 h-100">
-                <div class="d-flex align-items-center justify-content-between">
-                    
-                    <div class="d-flex align-items-center">
-                        <div class="icon-box bg-danger bg-opacity-10 rounded-3 d-flex align-items-center justify-content-center me-3" style="width: 52px; height: 52px;">
-                            <i class="bi bi-mortarboard text-danger fs-4"></i>
-                        </div>
+<div class="row g-4 mb-5">
+    <div class="col-12 d-flex align-items-center mb-1">
+        <hr class="flex-grow-1 opacity-10">
+        <span class="px-3 text-muted small fw-bold text-uppercase tracking-widest">O explorar niveles</span>
+        <hr class="flex-grow-1 opacity-10">
+    </div>
+    
+    <div class="row g-3 mb-5">
+        
+        {% for nivel in niveles %}
+        <div class="col-12 animate-item" style="--delay: {{ forloop.counter0 }}">
+            <a href="{% url 'lista_grados' nivel.id %}" class="text-decoration-none nivel-wrapper">
+                <div class="card nivel-card border-0 p-3 h-100">
+                    <div class="d-flex align-items-center justify-content-between">
                         
-                        <div>
-                            <h2 class="h6 fw-bold mb-0 text-dark">{{ nivel.nombre }}</h2>
-                            <span class="text-muted small d-block">Gestionar alumnos y retiros</span>
+                        <div class="d-flex align-items-center">
+                            <div class="icon-box bg-danger bg-opacity-10 rounded-3 d-flex align-items-center justify-content-center me-3" style="width: 52px; height: 52px;">
+                                <i class="bi bi-mortarboard text-danger fs-4"></i>
+                            </div>
+                            <div>
+                                <h2 class="h6 fw-bold mb-0 text-dark">{{ nivel.nombre }}</h2>
+                                <span class="text-muted small d-block">Ver grados y alumnos</span>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="arrow-circle bg-danger bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                        <i class="bi bi-chevron-right text-danger small"></i>
-                    </div>
+                        <div class="arrow-circle bg-danger bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i class="bi bi-chevron-right text-danger small"></i>
+                        </div>
 
+                    </div>
                 </div>
-            </div>
-        </a>
+            </a>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-folder-x display-1 text-light"></i>
+            <p class="text-muted mt-3">No hay niveles educativos registrados.</p>
+        </div>
+        {% endfor %}
     </div>
-    {% empty %}
-    <div class="col-12 text-center py-5">
-        <i class="bi bi-folder-x display-1 text-light"></i>
-        <p class="text-muted mt-3">No hay niveles educativos registrados.</p>
-    </div>
-    {% endfor %}
 </div>
 
 <div class="text-center mt-5">
@@ -61,40 +110,93 @@
 </div>
 
 <style>
+    body { background-color: #f8fafc; } /* Fondo ligerísimo para que resalten las tarjetas blancas */
+    
     .tracking-widest { letter-spacing: 0.15em; }
 
-    .nivel-card {
+    /* Contenedor Principal Buscador */
+    .main-search-card {
         background: #ffffff;
-        border-radius: 20px !important;
+        border-radius: 32px !important;
+        box-shadow: 0 20px 40px -15px rgba(0,0,0,0.05);
+    }
+
+    /* Input Buscador */
+    .search-input-container {
+        background: #f1f5f9;
+        border: 2px solid transparent;
+        border-radius: 20px;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid #f1f5f9 !important;
+    }
+    .search-input-container:focus-within {
+        background: #ffffff;
+        border-color: #fca5a5;
+        box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.1);
+        transform: translateY(-2px);
+    }
+    .search-input-container input::placeholder { color: #94a3b8; }
+
+    /* Tarjetas de Resultados (Separadas, no unidas) */
+    .resultados-wrapper {
+        border-radius: 20px;
+        background: #fafafa;
+    }
+    .result-item {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px !important;
+        margin-bottom: 10px;
+        transition: all 0.25s ease;
+        animation: slideInUp 0.3s ease forwards;
         box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
-
-    /* ESTADO AL PASAR EL MOUSE (Hover) */
-    .nivel-card:hover {
-        transform: translateY(-4px);
-        border-color: #ef4444 !important; /* Rojo intenso en borde */
-        box-shadow: 0 12px 20px -8px rgba(239, 68, 68, 0.15) !important;
+    .result-item:hover {
+        background-color: #fff;
+        border-color: #fca5a5;
+        box-shadow: 0 8px 16px -4px rgba(239, 68, 68, 0.1);
+        transform: scale(1.01);
+    }
+    .result-item.selected-card {
+        background-color: #fef2f2 !important;
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 1px #ef4444;
     }
 
-    /* CAMBIO DE COLOR AL HOVER */
-    .nivel-card:hover .arrow-circle {
-        background-color: #ef4444 !important;
-    }
-    
-    .nivel-card:hover .arrow-circle i {
-        color: white !important;
-    }
-
-    .nivel-card:hover .icon-box {
-        background-color: #ef4444 !important;
+    /* Chips de Selección */
+    .chip-seleccion {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        font-weight: 600;
+        letter-spacing: 0.5px;
     }
 
-    .nivel-card:hover .icon-box i {
-        color: white !important;
-        transform: rotate(-10deg) scale(1.1);
+    /* Botón Masivo con efecto "Pulse" */
+    .btn-masivo {
+        transition: all 0.3s ease;
+        animation: pulse shadow-pulse 2s infinite;
     }
+    .btn-masivo:hover {
+        transform: translateY(-3px);
+        background-color: #b91c1c;
+    }
+
+    /* Tarjetas de Nivel Educativo */
+    .nivel-card { 
+        background: #ffffff; 
+        border-radius: 20px !important; 
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        border: 1px solid #f1f5f9 !important; 
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
+    }
+    .nivel-card:hover { 
+        transform: translateY(-4px); 
+        border-color: #ef4444 !important; 
+        box-shadow: 0 12px 20px -8px rgba(239, 68, 68, 0.15) !important; 
+    }
+    .nivel-card:hover .arrow-circle { background-color: #ef4444 !important; }
+    .nivel-card:hover .arrow-circle i { color: white !important; }
+    .nivel-card:hover .icon-box { background-color: #ef4444 !important; }
+    .nivel-card:hover .icon-box i { color: white !important; transform: rotate(-10deg) scale(1.1); }
 
     /* BOTÓN VOLVER */
     .btn-back-minimal {
@@ -106,166 +208,173 @@
     }
     .btn-back-minimal:hover { color: #ef4444; }
 
-    /* ANIMACIONES */
-    .animate-item {
-        opacity: 0;
-        animation: fadeInUp 0.6s ease forwards;
-        animation-delay: calc(var(--delay) * 0.1s);
-    }
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(15px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+    /* Checkbox personalizado */
+    .custom-check { width: 24px; height: 24px; border-radius: 6px; border: 2px solid #cbd5e1; cursor: pointer; transition: 0.2s; }
+    .custom-check:checked { background-color: #ef4444; border-color: #ef4444; }
 
-    /* Estilo del disparador de búsqueda */
-    .search-trigger {
-        transition: all 0.3s ease;
-        border: 1px solid #f1f5f9 !important;
-    }
-    .search-trigger:hover {
-        transform: scale(1.02);
-        box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.1) !important;
-        border-color: rgba(239, 68, 68, 0.2) !important;
-    }
-
-    /* Efecto Glassmorphism en el Modal */
-    .modal-blur {
-        backdrop-filter: blur(8px);
-        background-color: rgba(255, 255, 255, 0.7);
-    }
-
-    .modal-content-custom {
-        border-radius: 28px !important;
-        border: none !important;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15) !important;
-    }
-
-    .search-input-container {
-        background: #f8fafc;
-        border: 2px solid transparent;
-        transition: all 0.3s ease;
-    }
-
-    .search-input-container:focus-within {
-        background: #fff;
-        border-color: #ef4444;
-        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
-    }
-
-    /* Animación de entrada de resultados */
-    @keyframes slideInUp {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .result-item {
-        animation: slideInUp 0.4s ease forwards;
-        border-radius: 16px !important;
-        border: 1px solid #f1f5f9 !important;
-        margin-bottom: 8px;
-        transition: all 0.2s ease;
-    }
-
-    .result-item:hover {
-        background-color: #fef2f2 !important;
-        border-color: #fecaca !important;
-        transform: translateX(5px);
-    }
+    /* Animaciones */
+    .animate-item { opacity: 0; animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; animation-delay: calc(var(--delay) * 0.1s); }
+    .animate-fade-in { animation: fadeIn 0.6s ease forwards; }
+    
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 </style>
-
-<!-- MODAL BUSCADOR GLOBAL -->
-<div class="modal fade modal-blur" id="searchModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm-fullscreen">
-        <div class="modal-content modal-content-custom">
-            <div class="modal-header border-0 pt-4 px-4">
-                <h5 class="fw-bold mb-0">Buscador de Alumnos</h5>
-                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="search-input-container d-flex align-items-center px-3 py-2 rounded-4 mb-4">
-                    <i class="bi bi-search text-muted fs-5 me-2"></i>
-                    <input type="text" id="inputBusqueda" class="form-control border-0 bg-transparent shadow-none py-2" 
-                           placeholder="Escribe para buscar..." autocomplete="off">
-                </div>
-                
-                <div id="resultadosBusqueda" class="overflow-auto" style="max-height: 400px; scrollbar-width: none;">
-                    <div class="text-center py-5 text-muted">
-                        <i class="bi bi-person-badge fs-1 opacity-25"></i>
-                        <p class="small mt-2">Busca por nombre o grado</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const input = document.getElementById('inputBusqueda');
-    const contenedor = document.getElementById('resultadosBusqueda');
-    let timeout = null;
+    const contenedorResultados = document.getElementById('resultadosBusqueda');
+    const contenedorSeleccionados = document.getElementById('contenedorSeleccionados');
+    const footerMasivo = document.getElementById('footerMasivo');
+    const inputsOcultos = document.getElementById('inputsOcultos');
+    const contadorSeleccionados = document.getElementById('contadorSeleccionados');
+    const formMasivo = document.getElementById('formBuscadorMasivo');
+    const estadoInicial = document.getElementById('estadoInicialBusqueda').outerHTML;
+    const btnLimpiar = document.getElementById('btnLimpiarBusqueda');
 
+    // Acción de limpiar el texto
+    btnLimpiar.addEventListener('click', function() {
+        input.value = '';
+        this.classList.add('d-none');
+        input.dispatchEvent(new Event('input')); // Finge que borraste todo manualmente para resetear la lista
+        input.focus();
+    });
+    
+    let timeout = null;
+    const seleccionados = new Map();
+
+    // 1. Lógica de Selección Front-end
+    window.toggleAlumno = function(id, nombre) {
+        if (seleccionados.has(id)) {
+            seleccionados.delete(id);
+        } else {
+            seleccionados.set(id, nombre);
+        }
+        actualizarInterfazSeleccion();
+        
+        const checkbox = document.getElementById(`check-result-${id}`);
+        const fila = document.getElementById(`result-item-${id}`);
+        if (checkbox) checkbox.checked = seleccionados.has(id);
+        if (fila) {
+            fila.classList.toggle('selected-card', seleccionados.has(id));
+        }
+    };
+
+    function actualizarInterfazSeleccion() {
+        contenedorSeleccionados.innerHTML = '';
+        inputsOcultos.innerHTML = '';
+        
+        if (seleccionados.size === 0) {
+            footerMasivo.style.display = 'none';
+            return;
+        }
+        
+        footerMasivo.style.display = 'block';
+        contadorSeleccionados.textContent = seleccionados.size;
+        
+        seleccionados.forEach((nombre, id) => {
+            const badge = document.createElement('span');
+            badge.className = 'chip-seleccion badge d-flex align-items-center gap-2 py-2 px-3 rounded-pill shadow-sm animate-fade-in fs-6';
+            badge.innerHTML = `${nombre} <i class="bi bi-x-circle-fill text-white opacity-75" style="cursor:pointer; transition: 0.2s;" onmouseover="this.classList.remove('opacity-75')" onmouseout="this.classList.add('opacity-75')" onclick="toggleAlumno(${id}, '${nombre}')"></i>`;
+            contenedorSeleccionados.appendChild(badge);
+            
+            const inputHidden = document.createElement('input');
+            inputHidden.type = 'hidden';
+            inputHidden.name = 'alumnos';
+            inputHidden.value = id;
+            inputsOcultos.appendChild(inputHidden);
+        });
+    }
+
+    // 2. Búsqueda AJAX
     input.addEventListener('input', function() {
+        if (this.value.length > 0) {
+            btnLimpiar.classList.remove('d-none');
+        } else {
+            btnLimpiar.classList.add('d-none');
+        }
         clearTimeout(timeout);
         const query = this.value.trim();
 
         if (query.length < 2 && isNaN(query)) {
-            contenedor.innerHTML = `
-                <div class="text-center py-5 text-muted animate-fade-in">
-                    <i class="bi bi-person-badge fs-1 opacity-25"></i>
-                    <p class="small mt-2">Escribe al menos 2 letras...</p>
-                </div>`;
+            contenedorResultados.innerHTML = estadoInicial;
             return;
         }
 
-        // Debounce de 300ms para mejorar rendimiento
         timeout = setTimeout(() => {
             fetch(`{% url 'buscar_alumnos_ajax' %}?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
-                    contenedor.innerHTML = '';
+                    contenedorResultados.innerHTML = '';
                     
                     if (data.results.length === 0) {
-                        contenedor.innerHTML = `
+                        contenedorResultados.innerHTML = `
                             <div class="text-center py-5 animate-fade-in">
-                                <i class="bi bi-emoji-frown fs-1 text-muted opacity-25"></i>
-                                <p class="text-muted mt-2">No se encontraron resultados</p>
+                                <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                    <i class="bi bi-search text-muted opacity-50 fs-2"></i>
+                                </div>
+                                <h6 class="fw-bold text-dark mb-1">No hay coincidencias</h6>
+                                <p class="small text-muted mb-0">Revisa la ortografía e intenta de nuevo</p>
                             </div>`;
                         return;
                     }
 
                     data.results.forEach((a, index) => {
+                        const delay = index * 0.03;
+                        const isSelected = seleccionados.has(a.id);
                         const actionUrl = `{% url 'crear_retiro' 0 %}`.replace('0', a.id);
-                        const delay = index * 0.05; // Retraso escalonado
-                        
+                        const disabledClass = a.tiene_pendiente ? 'opacity-50' : '';
+                        const bgClass = isSelected ? 'selected-card' : '';
+
                         const item = `
-                            <a href="${actionUrl}" class="list-group-item list-group-item-action result-item d-flex align-items-center justify-content-between p-3" 
-                               style="animation-delay: ${delay}s">
-                                <div class="d-flex align-items-center">
-                                    <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
-                                        <i class="bi bi-person"></i>
+                            <div id="result-item-${a.id}" class="d-flex align-items-center justify-content-between p-3 ${disabledClass} ${bgClass} result-item" style="animation-delay: ${delay}s">
+                                
+                                <div class="d-flex align-items-center flex-grow-1 ${a.tiene_pendiente ? '' : 'cursor-pointer'}" 
+                                     ${a.tiene_pendiente ? '' : `onclick="toggleAlumno(${a.id}, '${a.nombre}')"`}>
+                                     
+                                    <div class="me-3">
+                                        ${a.tiene_pendiente 
+                                            ? '<i class="bi bi-check-circle-fill text-success fs-3"></i>' 
+                                            : `<input type="checkbox" id="check-result-${a.id}" class="form-check-input custom-check m-0" 
+                                                      ${isSelected ? 'checked' : ''} 
+                                                      onclick="event.stopPropagation(); toggleAlumno(${a.id}, '${a.nombre}')">`
+                                        }
                                     </div>
+                                    
                                     <div>
-                                        <h6 class="mb-0 fw-bold text-dark">${a.nombre}</h6>
-                                        <small class="text-muted">${a.grado}</small>
+                                        <h6 class="mb-0 fw-bold text-dark fs-5" style="letter-spacing: -0.3px;">${a.nombre}</h6>
+                                        <div class="d-flex align-items-center mt-1">
+                                            <i class="bi bi-mortarboard-fill text-muted opacity-50 me-1" style="font-size: 0.8rem;"></i>
+                                            <small class="text-muted fw-semibold">${a.grado}</small>
+                                        </div>
                                     </div>
                                 </div>
-                                ${a.tiene_pendiente 
-                                    ? '<span class="badge rounded-pill bg-warning text-dark fw-normal">Pendiente</span>' 
-                                    : '<i class="bi bi-chevron-right text-muted small"></i>'}
-                            </a>
+
+                                <div class="ms-3 ps-3 border-start">
+                                    ${a.tiene_pendiente 
+                                        ? '<span class="badge bg-warning text-dark fw-bold px-3 py-2 rounded-pill shadow-sm"><i class="bi bi-hourglass-split me-1"></i> Pendiente</span>' 
+                                        : `<a href="${actionUrl}" class="btn btn-outline-danger btn-sm rounded-pill fw-bold px-4 py-2" 
+                                              onclick="this.innerHTML='<span class=\\'spinner-border spinner-border-sm me-1\\'></span> Cargando'; this.classList.add('disabled');">Avisar</a>`
+                                    }
+                                </div>
+                            </div>
                         `;
-                        contenedor.insertAdjacentHTML('beforeend', item);
+                        contenedorResultados.insertAdjacentHTML('beforeend', item);
                     });
                 });
         }, 300);
     });
 
-    // Auto-focus al abrir el modal
-    const searchModal = document.getElementById('searchModal');
-    searchModal.addEventListener('shown.bs.modal', () => {
-        input.focus();
+    // 3. Animación visual al hacer Submit Masivo
+    formMasivo.addEventListener('submit', function() {
+        const btnSubmit = document.getElementById('btnSubmitMasivo');
+        btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2" style="margin-bottom: 2px;"></span> Procesando retiros...';
+        btnSubmit.classList.add('disabled');
     });
+
+    // Enfocar automáticamente el buscador para ganar tiempo
+    setTimeout(() => { input.focus(); }, 400);
 });
 </script>
 
