@@ -36,11 +36,27 @@ def reset_diario_alumnos():
         )
 
 
+# @login_required
+# def seleccionar_rol(request):
+
+#     reset_diario_alumnos()   # reset automático
+
+#     return render(request, 'seleccionar_rol.html')
+
 @login_required
 def seleccionar_rol(request):
+    # 1. Ejecutar el reset 
+    reset_diario_alumnos()
 
-    reset_diario_alumnos()   # reset automático
+    # 2. Lógica de redirección por grupos
+    if request.user.groups.filter(name='Porteria').exists():
+        return redirect('seleccionar_nivel')
+    
+    elif request.user.groups.filter(name='Docentes').exists():
+        return redirect('docente_seleccionar_grado')
 
+    # 3. Si es Superusuario o no tiene grupo, mostrar la pantalla de selección manual
+    # o podrías enviarlo al admin si prefieres
     return render(request, 'seleccionar_rol.html')
 
 # ===============================

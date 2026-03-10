@@ -19,12 +19,16 @@
         <div class="search-input-container d-flex align-items-center px-4 py-2 mb-4">
             <i class="bi bi-search text-danger fs-4 me-3"></i>
             <input type="text" id="inputBusqueda" class="form-control border-0 bg-transparent shadow-none py-3 fs-5" 
-                   placeholder="Nombre del alumno..." autocomplete="off">
+                    placeholder="Nombre del alumno..." autocomplete="off"
+                    autocorrect="off" spellcheck="false" enterkeyhint="search" inputmode="search">
             
             <i class="bi bi-x-circle-fill text-muted fs-5 ms-2 d-none" id="btnLimpiarBusqueda" 
                style="cursor: pointer; transition: 0.2s;" 
                onmouseover="this.classList.replace('text-muted', 'text-danger')" 
                onmouseout="this.classList.replace('text-danger', 'text-muted')"></i>
+            
+            <a href="javascript:void(0)" id="btnCerrarBusqueda" class="btn-cerrar-busqueda ms-3" 
+               style="display:none;">Cancelar</a>
         </div>
 
         <form id="formBuscadorMasivo" method="POST" action="{% url 'crear_retiros_masivos' %}">
@@ -219,6 +223,132 @@
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Ocultar el botón cancelar por defecto en todas las pantallas */
+    .btn-cerrar-busqueda {
+        display: none !important;
+    }
+
+    @media (max-width: 768px) {
+        /* Fija el botón de envío en la parte inferior de la pantalla */
+        #footerMasivo {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 15px 20px 25px 20px; /* Espacio extra abajo para el área segura del iPhone */
+            box-shadow: 0 -10px 20px rgba(0,0,0,0.05);
+            z-index: 1000;
+            margin-bottom: 0 !important;
+        }
+        
+        /* Evita que el botón tape el último resultado */
+        body {
+            padding-bottom: 80px; 
+        }
+
+        /* Elimina el scroll interno para que use el scroll natural del teléfono (Estado normal) */
+        .resultados-wrapper {
+            max-height: none !important; 
+            overflow-y: visible !important;
+        }
+
+        /* --- ESTADO MODO BÚSQUEDA PANTALLA COMPLETA --- */
+        
+        /* Bloquea el scroll del fondo cuando el buscador está abierto */
+        body.search-active {
+            overflow: hidden;
+            height: 100dvh; /* Asegura que el body no crezca más de la cuenta */
+        }
+
+        /* Transformamos la tarjeta principal en un panel fijo superior */
+        body.search-active .main-search-card {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100dvh;
+            z-index: 9999;
+            border-radius: 0 !important;
+            margin: 0 !important;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ¡LA CLAVE ESTÁ AQUÍ! El card-body también debe ser un contenedor flex */
+        body.search-active .main-search-card .card-body {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            padding: 15px !important;
+            overflow: hidden; /* Evita que el card-body intente hacer scroll... */
+        }
+
+        /* ...para delegarle el scroll exclusivamente al wrapper de resultados */
+        body.search-active .resultados-wrapper {
+            flex-grow: 1;
+            max-height: none !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch; /* Activa el scroll suave y nativo en iOS */
+            padding-bottom: 100px; /* Da espacio extra abajo para que no choque con los bordes del celular */
+        }
+
+        /* Mostrar el botón cancelar solo en modo búsqueda activa en móvil */
+        body.search-active .btn-cerrar-busqueda {
+            display: block !important;
+            color: #ef4444;
+            font-weight: bold;
+            text-decoration: none;
+            padding: 10px 0;
+        }
+    }
+
+    /* Añade espacio extra al final de la lista cuando el botón flotante está visible */
+    .resultados-con-footer {
+        padding-bottom: 90px !important; /* Espacio suficiente para librar el botón masivo */
+    }
+    
+    @media (max-width: 768px) {
+        /* En móviles en modo búsqueda a pantalla completa necesitamos un poco más de espacio */
+        body.search-active .resultados-con-footer {
+            padding-bottom: 120px !important; 
+        }
+    }
+
+    /* =========================================
+       EFECTO SKELETON LOADER
+       ========================================= */
+    .skeleton-card {
+        pointer-events: none;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        margin-bottom: 10px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .skeleton-anim {
+        background: #e2e8f0;
+        background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite linear;
+        border-radius: 8px;
+    }
+
+    .skeleton-avatar { width: 24px; height: 24px; border-radius: 6px; }
+    .skeleton-title { width: 150px; height: 18px; margin-bottom: 8px; }
+    .skeleton-subtitle { width: 90px; height: 12px; }
+    .skeleton-btn { width: 80px; height: 32px; border-radius: 50px; }
+
+    @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
 </style>
 
 <script>
@@ -232,6 +362,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const formMasivo = document.getElementById('formBuscadorMasivo');
     const estadoInicial = document.getElementById('estadoInicialBusqueda').outerHTML;
     const btnLimpiar = document.getElementById('btnLimpiarBusqueda');
+    const btnCerrarBusqueda = document.getElementById('btnCerrarBusqueda');
+
+    // Cuando el input recibe el foco (el usuario toca para escribir)
+    input.addEventListener('focus', function() {
+        if (window.innerWidth <= 768) {
+            document.body.classList.add('search-active');
+        }
+    });
+
+    // Cuando el usuario presiona "Cancelar"
+    btnCerrarBusqueda.addEventListener('click', function() {
+        document.body.classList.remove('search-active');
+        input.value = ''; // Opcional: limpiar la búsqueda al salir
+        input.blur(); // Quitar el foco para cerrar el teclado
+
+        // NUEVO: Limpiar la selección múltiple al cancelar
+        seleccionados.clear();
+        actualizarInterfazSeleccion(); // Esto oculta el footer masivo y borra los chips
+
+        contenedorResultados.innerHTML = estadoInicial; // Restaurar estado
+        btnLimpiar.classList.add('d-none');
+    });
 
     // Acción de limpiar el texto
     btnLimpiar.addEventListener('click', function() {
@@ -267,10 +419,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (seleccionados.size === 0) {
             footerMasivo.style.display = 'none';
+            // Quitamos el espacio extra si el botón se oculta
+            contenedorResultados.classList.remove('resultados-con-footer');
             return;
         }
         
         footerMasivo.style.display = 'block';
+        // Añadimos el espacio extra porque el botón está visible
+        contenedorResultados.classList.add('resultados-con-footer');
+        
         contadorSeleccionados.textContent = seleccionados.size;
         
         seleccionados.forEach((nombre, id) => {
@@ -303,10 +460,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         timeout = setTimeout(() => {
+            // 1. INYECTAR SKELETON LOADER MIENTRAS CARGA
+            const skeletonHTML = `
+                <div class="skeleton-card">
+                    <div class="d-flex align-items-center flex-grow-1">
+                        <div class="skeleton-anim skeleton-avatar me-3"></div>
+                        <div>
+                            <div class="skeleton-anim skeleton-title"></div>
+                            <div class="skeleton-anim skeleton-subtitle"></div>
+                        </div>
+                    </div>
+                    <div class="ms-3 ps-3 border-start">
+                        <div class="skeleton-anim skeleton-btn"></div>
+                    </div>
+                </div>
+            `;
+            // Mostramos 3 tarjetas de esqueleto para simular resultados
+            contenedorResultados.innerHTML = skeletonHTML.repeat(3);
+
+            // 2. HACER LA PETICIÓN AL SERVIDOR
             fetch(`{% url 'buscar_alumnos_ajax' %}?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
-                    contenedorResultados.innerHTML = '';
+                    contenedorResultados.innerHTML = ''; // Borramos los skeletons
                     
                     if (data.results.length === 0) {
                         contenedorResultados.innerHTML = `
@@ -374,7 +550,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Enfocar automáticamente el buscador para ganar tiempo
-    setTimeout(() => { input.focus(); }, 400);
+    setTimeout(() => { 
+        // Solo enfocar automáticamente si es una pantalla de escritorio (más de 768px)
+        if (window.innerWidth > 768) {
+            input.focus(); 
+        }
+    }, 400);
 });
 </script>
 
