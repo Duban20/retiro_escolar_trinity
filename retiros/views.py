@@ -1,319 +1,200 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
-from .models import Nivel, Grado, Alumno, Retiro
-from django.contrib import messages
-from django.db.models import Exists, OuterRef, Q
 from django.utils import timezone
+from django.contrib import messages
 from django.http import JsonResponse
+from django.db.models import Q
+from django.urls import reverse
+from .models import Transporte, TurnoTransporte, Grado, Alumno
 
-
-# def reset_diario_alumnos():
-#     hoy = timezone.localdate()
-
-#     if not Alumno.objects.filter(fecha_estado=hoy).exists():
-#         Alumno.objects.update(
-#             en_colegio=True,
-#             fecha_estado=hoy
-#         )
-
-def reset_diario_alumnos():
-    hoy = timezone.localdate()
-
-    # Si no hay alumnos con la fecha de hoy, significa que es el primer acceso del día
-    if not Alumno.objects.filter(fecha_estado=hoy).exists():
-        
-        # 1. Marcar todos los retiros pendientes (de días anteriores) como ENTREGADOS
-        Retiro.objects.filter(estado='PENDIENTE').update(
-            estado='ENTREGADO',
-            hora_entrega=timezone.now()
-        )
-
-        # 2. Volver a habilitar a todos los alumnos (ponerlos en el colegio)
-        Alumno.objects.update(
-            en_colegio=True,
-            fecha_estado=hoy
-        )
-
-
-# @login_required
-# def seleccionar_rol(request):
-
-#     reset_diario_alumnos()   # reset automático
-
-#     return render(request, 'seleccionar_rol.html')
 
 @login_required
 def seleccionar_rol(request):
-    # 1. Ejecutar el reset 
-    reset_diario_alumnos()
-
-    # 2. Lógica de redirección por grupos
     if request.user.groups.filter(name='Porteria').exists():
-        return redirect('seleccionar_nivel')
-    
+        return redirect('porteria_encolar')
     elif request.user.groups.filter(name='Docentes').exists():
-        return redirect('docente_seleccionar_grado')
-
-    # 3. Si es Superusuario o no tiene grupo, mostrar la pantalla de selección manual
-    # o podrías enviarlo al admin si prefieres
+        return redirect('panel_cola_transportes')
     return render(request, 'seleccionar_rol.html')
 
-# ===============================
-# SECCIÓN ENTRADA (Portería)
-# ===============================
+# ==========================================
+# 1. VISTA DE PORTERÍA (Solo Encolar)
+# ==========================================
+@login_required
+def porteria_encolar(request):
+    # Solo mostramos cuántos hay en fila como dato informativo
+    vehiculos_en_cola = TurnoTransporte.objects.filter(estado='EN_COLA').count()
+    return render(request, 'porteria_encolar.html', {'vehiculos_en_cola': vehiculos_en_cola})
 
 @login_required
-def seleccionar_nivel(request):
-    reset_diario_alumnos()
-    niveles = Nivel.objects.filter(activo=True)
-    return render(request, 'seleccionar_nivel.html', {'niveles': niveles})
+def encolar_transporte(request):
+    if request.method == 'POST':
+        codigo = request.POST.get('codigo_transporte', '').strip().upper()
+        try:
+            transporte = Transporte.objects.get(codigo_unico=codigo, activo=True)
+            ya_en_cola = TurnoTransporte.objects.filter(transporte=transporte, estado__in=['EN_COLA', 'EMBARCANDO']).exists()
 
+            if ya_en_cola:
+                messages.warning(request, f"El transporte {codigo} ya está en la fila.")
+            else:
+                hay_actual = TurnoTransporte.objects.filter(estado='EMBARCANDO').exists()
+                nuevo_estado = 'EN_COLA' if hay_actual else 'EMBARCANDO'
+                TurnoTransporte.objects.create(transporte=transporte, estado=nuevo_estado)
+                messages.success(request, f"Transporte {codigo} agregado exitosamente.")
+                
+        except Transporte.DoesNotExist:
+            messages.error(request, f"No se encontró un transporte con el código '{codigo}'.")
+            
+    # Redirige de vuelta a portería (ya no al panel general)
+    return redirect('porteria_encolar')
+
+# ==========================================
+# 2. VISTA DE PANTALLA (Docentes / Micrófono)
+# ==========================================
 @login_required
-def lista_grados(request, nivel_id):
-    nivel = get_object_or_404(Nivel, id=nivel_id)
-    grados = Grado.objects.filter(nivel=nivel, activo=True).order_by('orden')
-
-    return render(request, 'lista_grados.html', {
-        'nivel': nivel,
-        'grados': grados
-    })
-
-@login_required
-def lista_alumnos(request, grado_id):
-    grado = get_object_or_404(Grado, id=grado_id)
-    nivel = grado.nivel
-
-    retiro_pendiente = Retiro.objects.filter(
-        alumno=OuterRef('pk'),
-        estado='PENDIENTE'
-    )
-
-    alumnos = (
-        Alumno.objects
-        .filter(grado=grado, activo=True)
-        .annotate(tiene_retiro=Exists(retiro_pendiente))
-        .order_by('nombre')   # orden alfabético
-    )
-
-    cantidad = alumnos.filter(en_colegio=True).count()
-
-    return render(request, 'lista_alumnos.html', {
-        'grado': grado,
-        'nivel': nivel,
-        'alumnos': alumnos,
-        'cantidad': cantidad
-    })
-
-
-@login_required
-def crear_retiro(request, alumno_id):
-    alumno = get_object_or_404(Alumno, id=alumno_id)
-
-    # Verificar si ya existe retiro pendiente
-    existe_pendiente = Retiro.objects.filter(
-        alumno=alumno,
-        estado='PENDIENTE'
-    ).exists()
-
-    if existe_pendiente:
-        messages.warning(request, f"{alumno.nombre} ya tiene un retiro pendiente.")
-        return redirect(request.META.get('HTTP_REFERER'))
-
-    # Crear retiro si no existe
-    Retiro.objects.create(
-        alumno=alumno,
-        grado=alumno.grado,
-        estado='PENDIENTE'
-    )
-
-    messages.success(request, f"Retiro avisado para {alumno.nombre}")
-    return redirect(request.META.get('HTTP_REFERER'))
-
-
-@login_required
-@require_POST
-def crear_retiros_masivos(request):
-
-    ids = request.POST.getlist('alumnos')
-
-    if not ids:
-        messages.warning(request, "No seleccionó alumnos.")
-        return redirect(request.META.get('HTTP_REFERER'))
-
-    alumnos = Alumno.objects.filter(id__in=ids)
-
-    creados = 0
-    repetidos = 0
-
-    for alumno in alumnos:
-
-        existe = Retiro.objects.filter(
-            alumno=alumno,
-            estado='PENDIENTE'
-        ).exists()
-
-        if existe:
-            repetidos += 1
-            continue
-
-        Retiro.objects.create(
-            alumno=alumno,
-            grado=alumno.grado,
-            estado='PENDIENTE'
-        )
-
-        creados += 1
-
-    if creados:
-        messages.success(request, f"{creados} retiros creados correctamente.")
-
-    if repetidos:
-        messages.warning(request, f"{repetidos} alumnos ya tenían retiro pendiente.")
-
-    return redirect(request.META.get('HTTP_REFERER'))
-
-
-
-# SECCIÓN INTERNO (Preparación)
-@login_required
-def lista_pendientes(request):
-    retiros = Retiro.objects.filter(estado='PENDIENTE').order_by('hora_aviso')
-
-    return render(request, 'lista_pendientes.html', {
-        'retiros': retiros
-    })
-
-
-@login_required
-def marcar_entregado(request, retiro_id):
-    retiro = get_object_or_404(Retiro, id=retiro_id)
-
-    grado_id = retiro.grado.id  
-
-    # Marcar retiro como entregado
-    retiro.estado = 'ENTREGADO'
-    retiro.hora_entrega = timezone.now()
-    retiro.save(update_fields=['estado', 'hora_entrega'])
-
-    # Sacar alumno del colegio
-    alumno = retiro.alumno
-    alumno.en_colegio = False
-    alumno.fecha_estado = timezone.localdate()  
-    alumno.save(update_fields=['en_colegio', 'fecha_estado'])
-
-    messages.success(request, f"{alumno.nombre} fue entregado correctamente.")
-
-    return redirect('docente_pendientes', grado_id=grado_id)
-
-
-# ===============================
-# 🟣 SECCIÓN DOCENTE
-# ===============================
-@login_required
-def docente_seleccionar_grado(request):
-    grados = Grado.objects.filter(activo=True).order_by('orden')
-    return render(request, 'docente_seleccionar_grado.html', {
-        'grados': grados
-    })
-
-
-@login_required
-def docente_pendientes(request, grado_id):
-
-    grado = get_object_or_404(Grado, id=grado_id)
-
-    retiros = (
-        Retiro.objects
-        .select_related('alumno', 'grado')
-        .filter(
-            estado='PENDIENTE',
-            grado=grado
-        )
-        .order_by('hora_aviso')
-    )
-
-    return render(request, 'docente_pendientes.html', {
-        'grado': grado,
-        'retiros': retiros
-    })
-
+def panel_cola_transportes(request):
+    turno_actual = TurnoTransporte.objects.filter(estado='EMBARCANDO').first()
     
+    # Convertimos la cola a lista para poder separarla
+    turnos_en_cola = list(TurnoTransporte.objects.filter(estado='EN_COLA').order_by('hora_llegada'))
+    
+    # Separamos el que sigue (índice 0) y el resto (índice 1 en adelante)
+    siguiente_turno = turnos_en_cola[0] if len(turnos_en_cola) > 0 else None
+    resto_cola = turnos_en_cola[1:] if len(turnos_en_cola) > 1 else []
+
+    # Validación de Rol: ¿Puede despachar? (Si es docente, es False)
+    es_docente = request.user.groups.filter(name='Docentes').exists()
+    puede_despachar = not es_docente
+
+    return render(request, 'panel_transportes.html', {
+        'turno_actual': turno_actual,
+        'siguiente_turno': siguiente_turno,
+        'resto_cola': resto_cola,
+        'puede_despachar': puede_despachar
+    })
+
 @login_required
-def cantidad_pendientes(request, grado_id):
-    cantidad = Retiro.objects.filter(
-        estado='PENDIENTE',
-        grado_id=grado_id
-    ).count()
+def despachar_transporte(request, turno_id):
+    # Seguridad de backend: Evitar que un docente burle la interfaz forzando la URL
+    if request.user.groups.filter(name='Docentes').exists():
+        messages.error(request, "Acceso denegado: Los docentes no tienen permiso para despachar vehículos.")
+        return redirect('panel_cola_transportes')
 
-    return JsonResponse({'cantidad': cantidad})
+    turno_actual = get_object_or_404(TurnoTransporte, id=turno_id)
+    if request.method == 'POST':
+        turno_actual.estado = 'DESPACHADO'
+        turno_actual.hora_despacho = timezone.now()
+        turno_actual.save()
 
+        alumnos = turno_actual.transporte.alumnos.all()
+        alumnos.update(en_colegio=False, fecha_estado=timezone.localdate())
+
+        siguiente_turno = TurnoTransporte.objects.filter(estado='EN_COLA').order_by('hora_llegada').first()
+        if siguiente_turno:
+            siguiente_turno.estado = 'EMBARCANDO'
+            siguiente_turno.save()
+            messages.success(request, f"Vehículo despachado. Turno actual: {siguiente_turno.transporte.codigo_unico}.")
+        else:
+            messages.success(request, "Vehículo despachado. La fila está vacía.")
+
+    return redirect('panel_cola_transportes')
 
 @login_required
-def lista_pendientes_json(request, grado_id):
-    retiros = Retiro.objects.filter(
-        estado='PENDIENTE',
-        alumno__grado_id=grado_id
-    ).select_related('alumno')
-
-    data = []
-
-    for r in retiros:
-        data.append({
-            'id': r.id,
-            'nombre': r.alumno.nombre
-        })
-
-    return JsonResponse({'retiros': data})
-
-
-# Buscador global
-@login_required
-def buscar_alumnos_ajax(request):
+def buscar_transporte_ajax(request):
     query = request.GET.get('q', '').strip()
-
     if not query:
         return JsonResponse({'results': []})
 
-    # Permitir 1 carácter si es número (para grados)
-    if len(query) < 2 and not query.isdigit():
-        return JsonResponse({'results': []})
+    transportes = Transporte.objects.filter(
+        Q(codigo_unico__icontains=query) | Q(nombre__icontains=query) | Q(alumnos__nombre__icontains=query),
+        activo=True
+    ).distinct().order_by('codigo_unico')[:8]
 
-    palabras = query.split()
+    results = []
+    for t in transportes:
+        alumnos_match = t.alumnos.filter(nombre__icontains=query)
+        if alumnos_match.exists():
+            nombres = [a.nombre for a in alumnos_match[:2]]
+            hint = f"<i class='bi bi-person text-success'></i> {', '.join(nombres)}"
+        else:
+            hint = f"<i class='bi bi-truck text-muted'></i> {t.nombre}"
 
-    filtros = Q()
-
-    for palabra in palabras:
-        filtros &= (
-            Q(nombre__icontains=palabra) |
-            Q(grado__nombre__icontains=palabra)
-        )
-
-    retiro_pendiente = Retiro.objects.filter(
-        alumno=OuterRef('pk'),
-        estado='PENDIENTE'
-    )
-
-    alumnos = (
-        Alumno.objects
-        .filter(
-            filtros,
-            activo=True,
-            en_colegio=True
-        )
-        .annotate(tiene_pendiente=Exists(retiro_pendiente))
-        .select_related('grado')
-        .order_by('nombre')[:15]
-    )
-
-    results = [
-        {
-            'id': a.id,
-            'nombre': a.nombre,
-            'grado': a.grado.nombre,
-            'tiene_pendiente': a.tiene_pendiente
-        }
-        for a in alumnos
-    ]
+        results.append({'codigo': t.codigo_unico, 'nombre': t.nombre, 'hint': hint})
 
     return JsonResponse({'results': results})
+
+@login_required
+def verificar_cambios_cola(request):
+    """
+    Endpoint ultraligero. Solo devuelve un 'hash' o firma del estado actual de la fila.
+    No renderiza HTML ni consulta todos los alumnos, ahorrando 95% de CPU.
+    """
+    # Traemos solo los IDs y estados (consulta rapidísima)
+    turnos = TurnoTransporte.objects.filter(
+        estado__in=['EMBARCANDO', 'EN_COLA']
+    ).order_by('hora_llegada').values_list('id', 'estado')
+    
+    # Armamos una cadena simple: ej "5-EMBARCANDO|8-EN_COLA|12-EN_COLA"
+    hash_str = "|".join([f"{t[0]}-{t[1]}" for t in turnos])
+    
+    return JsonResponse({'hash': hash_str})
+
+# ==========================================
+# 3. DIRECTORIO Y GESTIÓN DE ESTUDIANTES
+# ==========================================
+
+@login_required
+def directorio_estudiantes(request):
+    """Muestra los grados y los alumnos del grado seleccionado."""
+    # Obtenemos todos los grados y transportes activos para los selectores
+    grados = Grado.objects.filter(activo=True).order_by('orden', 'nombre')
+    transportes = Transporte.objects.filter(activo=True).order_by('nombre')
+    
+    # Vemos si el usuario seleccionó un grado en la URL (ej: ?grado=2)
+    grado_id = request.GET.get('grado')
+    grado_actual = None
+    alumnos = []
+
+    if grado_id:
+        grado_actual = get_object_or_404(Grado, id=grado_id)
+        alumnos = Alumno.objects.filter(grado=grado_actual, activo=True).order_by('nombre')
+
+    return render(request, 'directorio_estudiantes.html', {
+        'grados': grados,
+        'transportes': transportes,
+        'grado_actual': grado_actual,
+        'alumnos': alumnos
+    })
+
+@login_required
+def editar_estudiante(request, alumno_id):
+    """Recibe los datos del modal y actualiza al estudiante."""
+    if request.method == 'POST':
+        alumno = get_object_or_404(Alumno, id=alumno_id)
+        
+        # Actualizar datos de texto
+        alumno.nombre = request.POST.get('nombre', alumno.nombre)
+        
+        # Actualizar Grado
+        grado_id = request.POST.get('grado_id')
+        if grado_id:
+            alumno.grado_id = grado_id
+            
+        # Actualizar Transporte (Puede ser "ninguno" si se va a pie)
+        transporte_id = request.POST.get('transporte_id')
+        if transporte_id:
+            alumno.transporte_id = transporte_id
+        else:
+            alumno.transporte = None
+            
+        # Actualizar Foto si se subió una nueva
+        if 'foto' in request.FILES:
+            alumno.foto = request.FILES['foto']
+            
+        alumno.save()
+        messages.success(request, f"Datos de {alumno.nombre} actualizados correctamente.")
+        
+        # Redirigir de vuelta al mismo grado que estábamos viendo
+        grado_retorno = request.POST.get('grado_actual_id', '')
+        return redirect(f"{reverse('directorio_estudiantes')}?grado={grado_retorno}")
+        
+    return redirect('directorio_estudiantes')

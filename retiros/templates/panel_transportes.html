@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %} Panel de Transportes {% endblock %}
+
+{% block content %}
+
+<div class="header-section text-center mb-5 animate-fade-in">
+    <nav aria-label="breadcrumb" class="d-flex justify-content-center mb-3">
+        <ol class="breadcrumb minimal-breadcrumb px-3 py-1 shadow-sm">
+            <li class="breadcrumb-item"><a href="{% url 'seleccionar_rol' %}">Inicio</a></li>
+            <li class="breadcrumb-item active fw-bold text-danger" aria-current="page">Fila de Transportes</li>
+        </ol>
+    </nav>
+    <span class="text-uppercase tracking-widest text-danger small fw-bold mb-2 d-block">Monitor de Salidas</span>
+    <h1 class="display-6 fw-bold text-dark mb-2">Despacho de Transportes</h1>
+</div>
+
+<div class="row g-4 justify-content-center" id="panel-monitor">
+
+    <div class="col-12 col-lg-6 animate-item" style="--delay: 1">
+        <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+            <span class="pulse-dot"></span> Turno actual (En Puerta)
+        </h5>
+        
+        {% if turno_actual %}
+            <div class="grado-minimal-card border-danger shadow-lg" style="border-width: 2px;">
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                        <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill mb-2 px-3">
+                            <i class="bi bi-megaphone-fill me-1"></i> EMBARCANDO
+                        </span>
+                        <h2 class="fw-bold text-dark mb-0">{{ turno_actual.transporte.codigo_unico }}</h2>
+                        <p class="text-muted mb-0"><i class="bi bi-truck me-1"></i> {{ turno_actual.transporte.nombre }}</p>
+                    </div>
+                    
+                    {% if puede_despachar %}
+                        <form method="POST" action="{% url 'despachar_transporte' turno_actual.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success rounded-pill fw-bold px-4 py-2 shadow-sm"
+                                    onclick="this.classList.add('disabled'); this.querySelector('.btn-text').classList.add('d-none'); this.querySelector('.btn-loader').classList.remove('d-none');">
+                                <span class="btn-text"><i class="bi bi-check2-circle me-1"></i> Despachar</span>
+                                <span class="btn-loader d-none"><span class="spinner-border spinner-border-sm me-1"></span> Saliendo...</span>
+                            </button>
+                        </form>
+                    {% else %}
+                        <span class="badge bg-light text-secondary border px-3 py-2 shadow-sm">
+                            <i class="bi bi-eye me-1"></i> Solo Lectura
+                        </span>
+                    {% endif %}
+                    
+                </div>
+
+                <hr class="opacity-10 my-4">
+                <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-people-fill me-2"></i>Abordando ({{ turno_actual.transporte.alumnos.count }})</h6>
+                <div class="d-flex flex-column gap-2">
+                    {% for alumno in turno_actual.transporte.alumnos.all %}
+                        <div class="d-flex align-items-center p-2 rounded-3" style="background: #f8fafc;">
+                            {% if alumno.foto %}
+                                <img src="{{ alumno.foto.url }}" alt="Foto" class="rounded-circle object-fit-cover me-3 border border-danger border-opacity-50 shadow-sm" style="width: 45px; height: 45px;">
+                            {% else %}
+                                <div class="bg-danger bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px;">
+                                    <i class="bi bi-person-fill text-danger fs-4"></i>
+                                </div>
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0 fw-bold text-dark">{{ alumno.nombre }}</h6>
+                                <small class="text-muted">{{ alumno.grado.nombre }}</small>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-muted small">Sin estudiantes vinculados.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-state-minimal shadow-sm text-center h-100 d-flex flex-column justify-content-center">
+                <i class="bi bi-door-open fs-1 text-muted opacity-50 mb-3"></i>
+                <h5 class="fw-bold text-dark">Puerta Libre</h5>
+                <p class="text-muted small">El área de embarque está despejada.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="col-12 col-lg-6 animate-item" style="--delay: 2">
+        <h5 class="fw-bold mb-3 text-muted"><i class="bi bi-hourglass-split me-2"></i>Ir preparando (Siguiente turno)</h5>
+        
+        {% if siguiente_turno %}
+            <div class="grado-minimal-card border-warning shadow-sm mb-4" style="border-width: 2px; background-color: #fffdf5;">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <span class="badge bg-warning text-dark rounded-pill mb-2 px-3">
+                            <i class="bi bi-clock-history me-1"></i> EN ESPERA
+                        </span>
+                        <h3 class="fw-bold text-dark mb-0">{{ siguiente_turno.transporte.codigo_unico }}</h3>
+                        <p class="text-muted mb-0 small"><i class="bi bi-truck me-1"></i> {{ siguiente_turno.transporte.nombre }}</p>
+                    </div>
+                </div>
+                <hr class="opacity-10 my-3">
+                <h6 class="fw-bold text-secondary mb-2 small text-uppercase">Llamar anticipadamente ({{ siguiente_turno.transporte.alumnos.count }})</h6>
+                
+                <div class="row g-2">
+                    {% for alumno in siguiente_turno.transporte.alumnos.all %}
+                        <div class="col-12 col-sm-6">
+                            <div class="p-2 rounded-3 bg-white border border-warning border-opacity-25 shadow-sm d-flex align-items-center">
+                                {% if alumno.foto %}
+                                    <img src="{{ alumno.foto.url }}" alt="Foto" class="rounded-circle object-fit-cover me-2 shadow-sm border border-warning" style="width: 32px; height: 32px;">
+                                {% else %}
+                                    <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                        <i class="bi bi-person text-warning"></i>
+                                    </div>
+                                {% endif %}
+                                <div class="text-truncate">
+                                    <h6 class="mb-0 fw-bold text-dark" style="font-size: 0.85rem;" title="{{ alumno.nombre }}">{{ alumno.nombre }}</h6>
+                                    <small class="text-muted" style="font-size: 0.7rem;">{{ alumno.grado.nombre }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="col-12 text-muted small">Sin estudiantes vinculados.</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if resto_cola %}
+                <h6 class="fw-bold mb-3 text-muted small text-uppercase">Resto de vehículos en cola ({{ resto_cola|length }})</h6>
+                
+                <div class="accordion d-flex flex-column gap-2" id="accordionRestoCola">
+                    {% for turno in resto_cola %}
+                        <div class="result-item shadow-sm bg-white overflow-hidden" style="border-radius: 16px;">
+                            
+                            <div class="p-3 d-flex justify-content-between align-items-center cursor-pointer" 
+                                 data-bs-toggle="collapse" 
+                                 data-bs-target="#collapseTurno{{ turno.id }}" 
+                                 aria-expanded="false" 
+                                 aria-controls="collapseTurno{{ turno.id }}">
+                                
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 38px; height: 38px;">
+                                        {{ forloop.counter|add:"2" }}
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold mb-0 text-dark">{{ turno.transporte.codigo_unico }}</h6>
+                                        <small class="text-muted">{{ turno.transporte.nombre }}</small>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-light text-secondary border px-2 py-1"><i class="bi bi-people-fill me-1"></i>{{ turno.transporte.alumnos.count }}</span>
+                                    <i class="bi bi-chevron-down text-muted transition-icon ms-1"></i>
+                                </div>
+                            </div>
+
+                            <div id="collapseTurno{{ turno.id }}" class="collapse" data-bs-parent="#accordionRestoCola">
+                                <div class="p-3 pt-0 border-top bg-light bg-opacity-25 mt-2">
+                                    <small class="fw-bold text-muted text-uppercase d-block mb-2 mt-1" style="font-size: 0.7rem;">Estudiantes asignados</small>
+                                    <div class="row g-2">
+                                        {% for alumno in turno.transporte.alumnos.all %}
+                                            <div class="col-12 col-sm-6">
+                                                <div class="p-2 rounded-3 bg-white border d-flex align-items-center shadow-sm">
+                                                    {% if alumno.foto %}
+                                                        <img src="{{ alumno.foto.url }}" alt="Foto" class="rounded-circle object-fit-cover me-2 shadow-sm" style="width: 28px; height: 28px;">
+                                                    {% else %}
+                                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 28px; height: 28px;">
+                                                            <i class="bi bi-person text-secondary"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                    <div class="text-truncate">
+                                                        <h6 class="mb-0 fw-bold text-dark" style="font-size: 0.85rem;" title="{{ alumno.nombre }}">{{ alumno.nombre }}</h6>
+                                                        <small class="text-muted" style="font-size: 0.7rem;">{{ alumno.grado.nombre }}</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% empty %}
+                                            <div class="col-12 text-muted small">Sin estudiantes vinculados.</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+        {% else %}
+            <div class="empty-state-minimal shadow-sm text-center h-100 d-flex flex-column justify-content-center">
+                <i class="bi bi-cone-striped fs-1 text-muted opacity-50 mb-3"></i>
+                <h5 class="fw-bold text-dark">Fila Vacía</h5>
+                <p class="text-muted small">No hay vehículos en espera actualmente.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.tracking-widest { letter-spacing: 0.15em; }
+.grado-minimal-card { background: #ffffff; border-radius: 24px; padding: 24px; transition: all 0.3s; }
+.result-item { border: 1px solid #e2e8f0; transition: all 0.2s; }
+.empty-state-minimal { padding: 3rem; border-radius: 24px; background: #ffffff; border: 1px dashed #e2e8f0; }
+
+.pulse-dot { display: inline-block; width: 10px; height: 10px; background: #dc3545; border-radius: 50%; box-shadow: 0 0 0 rgba(220, 53, 69, 0.4); animation: pulse-red 2s infinite; }
+@keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); } }
+.animate-item { opacity: 0; animation: fadeInUp 0.5s ease forwards; animation-delay: calc(var(--delay) * 0.1s); }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.cursor-pointer { cursor: pointer; }
+.transition-icon { transition: transform 0.3s ease; }
+[aria-expanded="true"] .transition-icon { transform: rotate(180deg); }
+
+.minimal-breadcrumb { background: #ffffff; border: 1px solid #f1f5f9; border-radius: 50px; font-size: 0.85rem; }
+.minimal-breadcrumb a { color: #64748b; text-decoration: none; transition: color 0.2s; }
+.minimal-breadcrumb a:hover { color: #dc3545; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let hashActual = null; // Arrancamos en nulo en vez de vacío
+
+    // 1. Tomar una "foto" inicial del estado apenas carga la página de forma invisible
+    fetch(`{% url 'verificar_cambios_cola' %}`)
+        .then(res => res.json())
+        .then(data => { hashActual = data.hash; })
+        .catch(err => console.error("Error cargando hash inicial:", err));
+
+    function refrescarMonitor() {
+        // 2. Proteger al usuario si tiene un acordeón abierto
+        let acordeonAbierto = document.querySelector('.collapse.show');
+        if (acordeonAbierto) return;
+
+        fetch(`{% url 'verificar_cambios_cola' %}`)
+            .then(res => res.json())
+            .then(data => {
+                const hashNuevo = data.hash;
+
+                // 3. Condición estricta: Solo actualiza si YA había un hash previo y el nuevo es distinto
+                if (hashActual !== null && hashNuevo !== undefined && hashActual !== hashNuevo) {
+                    
+                    fetch(window.location.href)
+                        .then(response => response.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            
+                            // Reemplazo limpio del DOM
+                            const nuevoContenido = doc.getElementById('panel-monitor').innerHTML;
+                            document.getElementById('panel-monitor').innerHTML = nuevoContenido;
+                            
+                            // Guardamos la nueva firma
+                            hashActual = hashNuevo; 
+                        })
+                        .catch(error => console.error("Error descargando nuevo HTML:", error));
+                        
+                } else if (hashActual === null && hashNuevo !== undefined) {
+                    // Fallback de seguridad: si la primera carga falló, asignamos el hash sin parpadear
+                    hashActual = hashNuevo;
+                }
+            })
+            .catch(error => console.error("Error verificando estado:", error));
+    }
+
+    // Ejecutar la revisión cada 4 segundos
+    setInterval(refrescarMonitor, 4000);
+});
+</script>
+{% endblock %}

@@ -15,40 +15,39 @@
 <div class="row g-4 justify-content-center">
     
     <div class="col-12 col-md-6 animate-item" style="--delay: 1">
-        <a href="{% url 'seleccionar_nivel' %}" class="role-link">
+        <a href="{% url 'porteria_encolar' %}" class="role-link">
             <div class="role-card h-100">
                 <div class="card-body p-4 text-center">
-                    <div class="role-icon-wrapper bg-red-soft mx-auto mb-4">
-                        <i class="bi bi-shield-lock"></i>
-                    </div>
+                    <div class="role-icon-wrapper bg-red-soft mx-auto mb-4"><i class="bi bi-cone-striped"></i></div>
                     <h4 class="fw-bold text-dark mb-2">Portería</h4>
-                    <p class="text-muted small mb-4 px-3">
-                        Gestión de avisos de retiro de alumnos.
-                    </p>
-                    <div class="action-hint">
-                        <span>Ingresar</span>
-                        <i class="bi bi-arrow-right ms-2"></i>
-                    </div>
+                    <p class="text-muted small mb-4 px-3">Buscador para encolar vehículos que llegan al colegio.</p>
+                    <div class="action-hint"><span>Ingresar</span><i class="bi bi-arrow-right ms-2"></i></div>
                 </div>
             </div>
         </a>
     </div>
 
     <div class="col-12 col-md-6 animate-item" style="--delay: 2">
-        <a href="{% url 'docente_seleccionar_grado' %}" class="role-link">
+        <a href="{% url 'panel_cola_transportes' %}" class="role-link">
             <div class="role-card h-100">
                 <div class="card-body p-4 text-center">
-                    <div class="role-icon-wrapper bg-red-soft mx-auto mb-4">
-                        <i class="bi bi-mortarboard"></i>
-                    </div>
-                    <h4 class="fw-bold text-dark mb-2">Docente</h4>
-                    <p class="text-muted small mb-4 px-3">
-                        Gestión de entregas de alumnos en tiempo real.
-                    </p>
-                    <div class="action-hint">
-                        <span>Ingresar</span>
-                        <i class="bi bi-arrow-right ms-2"></i>
-                    </div>
+                    <div class="role-icon-wrapper bg-red-soft mx-auto mb-4"><i class="bi bi-display"></i></div>
+                    <h4 class="fw-bold text-dark mb-2">Pantalla General</h4>
+                    <p class="text-muted small mb-4 px-3">Monitoreo de fila y preparación de estudiantes (Docentes/Micrófono).</p>
+                    <div class="action-hint"><span>Ingresar</span><i class="bi bi-arrow-right ms-2"></i></div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-4 animate-item" style="--delay: 3">
+        <a href="{% url 'directorio_estudiantes' %}" class="role-link">
+            <div class="role-card h-100">
+                <div class="card-body p-4 text-center">
+                    <div class="role-icon-wrapper bg-red-soft mx-auto mb-4"><i class="bi bi-journal-richtext"></i></div>
+                    <h4 class="fw-bold text-dark mb-2">Directorio Escolar</h4>
+                    <p class="text-muted small mb-4 px-3">Gestión de estudiantes, fotos, grados y asignación de transportes.</p>
+                    <div class="action-hint"><span>Ingresar</span><i class="bi bi-arrow-right ms-2"></i></div>
                 </div>
             </div>
         </a>

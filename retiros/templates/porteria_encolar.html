@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %} Portería - Ingreso de Vehículos {% endblock %}
+
+{% block content %}
+<div id="porteriaHeader" class="header-section text-center mb-5 animate-fade-in transition-header">
+    <nav aria-label="breadcrumb" class="d-flex justify-content-center mb-3">
+        <ol class="breadcrumb minimal-breadcrumb px-3 py-1 shadow-sm">
+            <li class="breadcrumb-item"><a href="{% url 'seleccionar_rol' %}">Inicio</a></li>
+            <li class="breadcrumb-item active fw-bold text-danger" aria-current="page">Control de Acceso</li>
+        </ol>
+    </nav>
+    <h1 class="display-6 fw-bold text-dark mb-2">Ingreso de Vehículos</h1>
+    <p class="text-secondary mx-auto mb-4">Busca el vehículo para agregarlo a la fila de despacho.</p>
+    
+    <span class="badge bg-light text-dark border px-4 py-2 fs-6 shadow-sm">
+        <i class="bi bi-car-front-fill text-danger me-2"></i> {{ vehiculos_en_cola }} vehículos en fila
+    </span>
+</div>
+
+<div class="row justify-content-center animate-item" style="--delay: 1">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="card main-search-card border-0 shadow-lg" style="border-radius: 24px;">
+            <div class="card-body p-4 position-relative">
+                <form method="POST" action="{% url 'encolar_transporte' %}" id="formTransporte" class="d-flex flex-column gap-4">
+                    {% csrf_token %}
+                    <div class="input-group search-input-container w-100">
+                        <span class="input-group-text bg-transparent border-0 ps-4 pe-2">
+                            <i class="bi bi-search text-danger fs-3"></i>
+                        </span>
+                        <input type="text" id="inputCodigoTransporte" name="codigo_transporte" class="form-control border-0 bg-transparent shadow-none py-4 fs-5" 
+                               placeholder="Código o nombre..." required autocomplete="off" style="text-transform: uppercase;">
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100 rounded-pill py-3 fw-bold shadow-sm fs-5">
+                        <i class="bi bi-plus-circle me-2"></i> Agregar a Fila
+                    </button>
+                </form>
+                <div id="sugerenciasContainer" class="sugerencias-dropdown shadow-lg d-none"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Animación suave para ocultar la cabecera */
+.transition-header { 
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin 0.4s ease; 
+    max-height: 300px; 
+    overflow: hidden; 
+    opacity: 1; 
+}
+.header-collapsed { 
+    max-height: 0; 
+    opacity: 0; 
+    margin-bottom: 0 !important; 
+    pointer-events: none; 
+}
+
+/* Misma lógica CSS que usábamos para el buscador */
+.main-search-card { background: #ffffff; border-radius: 24px !important; }
+.search-input-container { background: #f8fafc; border-radius: 50px; overflow: hidden; border: 2px solid transparent; transition: all 0.3s; }
+.search-input-container:focus-within { background: #ffffff; border-color: #fca5a5; box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1); }
+.sugerencias-dropdown { position: absolute; top: 100%; left: 20px; right: 20px; background: white; border-radius: 16px; margin-top: 5px; max-height: 350px; overflow-y: auto; border: 1px solid #e2e8f0; z-index: 1050; }
+.sugerencia-item { padding: 15px 20px; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.2s; }
+.sugerencia-item:hover { background-color: #fef2f2; }
+.animate-item { opacity: 0; animation: fadeInUp 0.5s ease forwards; animation-delay: calc(var(--delay) * 0.1s); }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.minimal-breadcrumb { background: #ffffff; border: 1px solid #f1f5f9; border-radius: 50px; font-size: 0.85rem; }
+.minimal-breadcrumb a { color: #64748b; text-decoration: none; transition: color 0.2s; }
+.minimal-breadcrumb a:hover { color: #dc3545; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('inputCodigoTransporte');
+    const container = document.getElementById('sugerenciasContainer');
+    const header = document.getElementById('porteriaHeader'); // Seleccionamos la cabecera
+    let timeoutId;
+
+    // Cuando el usuario toca el buscador, ocultamos la cabecera para ganar espacio
+    input.addEventListener('focus', function() {
+        header.classList.add('header-collapsed');
+    });
+
+    input.addEventListener('input', function() {
+        clearTimeout(timeoutId);
+        const query = this.value.trim();
+        if (query.length < 2) { container.classList.add('d-none'); return; }
+
+        timeoutId = setTimeout(() => {
+            fetch(`{% url 'buscar_transporte_ajax' %}?q=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(data => {
+                    container.innerHTML = '';
+                    if (data.results.length === 0) {
+                        container.innerHTML = `<div class="p-3 text-muted text-center small">No se encontraron resultados.</div>`;
+                    } else {
+                        data.results.forEach(t => {
+                            const div = document.createElement('div');
+                            div.className = 'sugerencia-item d-flex justify-content-between align-items-center';
+                            div.innerHTML = `<div><h6 class="fw-bold text-dark mb-0">${t.nombre}</h6><small class="text-muted d-block mt-1"><span class="badge bg-light text-dark border me-1">${t.codigo}</span> ${t.hint}</small></div><i class="bi bi-plus-circle text-danger opacity-75 fs-5"></i>`;
+                            div.addEventListener('click', () => {
+                                input.value = t.codigo;
+                                container.classList.add('d-none');
+                                document.getElementById('formTransporte').submit();
+                            });
+                            container.appendChild(div);
+                        });
+                    }
+                    container.classList.remove('d-none');
+                });
+        }, 300);
+    });
+
+    // Cuando el usuario hace clic fuera del buscador, restauramos la pantalla original
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !container.contains(e.target)) {
+            container.classList.add('d-none');
+            header.classList.remove('header-collapsed'); // Mostramos la cabecera nuevamente
+        }
+    });
+});
+</script>
+{% endblock %}

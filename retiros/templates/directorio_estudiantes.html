@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %} Directorio de Estudiantes {% endblock %}
+
+{% block content %}
+<div class="header-section text-center mb-4 animate-fade-in">
+    <nav aria-label="breadcrumb" class="d-flex justify-content-center mb-2">
+        <ol class="breadcrumb minimal-breadcrumb px-3 py-1 shadow-sm mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'seleccionar_rol' %}">Inicio</a></li>
+            <li class="breadcrumb-item active fw-bold text-danger" aria-current="page">Directorio</li>
+        </ol>
+    </nav>
+    <h1 class="display-6 fw-bold text-dark mb-1">Gestión de Estudiantes</h1>
+    <p class="text-muted small">Selecciona un grado para ver y editar a sus alumnos.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-12 col-md-4 col-lg-3 animate-item" style="--delay: 1">
+        <div class="grado-minimal-card shadow-sm border-0 p-3">
+            <h6 class="fw-bold text-muted mb-3 text-uppercase small">Cursos / Grados</h6>
+            <div class="d-flex flex-column gap-2">
+                {% for grado in grados %}
+                    <a href="?grado={{ grado.id }}" 
+                       class="btn text-start rounded-pill px-4 py-2 fw-semibold {% if grado_actual.id == grado.id %}btn-danger shadow-sm{% else %}btn-light text-secondary border{% endif %}"
+                       style="transition: all 0.2s;">
+                        <i class="bi bi-mortarboard me-2"></i> {{ grado.nombre }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-8 col-lg-9 animate-item" style="--delay: 2">
+        {% if grado_actual %}
+            <div class="grado-minimal-card shadow-sm border-0">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold text-dark mb-0"><i class="bi bi-people-fill text-danger me-2"></i> Alumnos de {{ grado_actual.nombre }}</h4>
+                    <span class="badge bg-light text-dark border px-3 py-2 fs-6">{{ alumnos.count }} registrados</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="text-secondary small fw-bold text-uppercase border-0 rounded-start">Estudiante</th>
+                                <th class="text-secondary small fw-bold text-uppercase border-0">Transporte Asignado</th>
+                                <th class="text-secondary small fw-bold text-uppercase border-0 rounded-end text-end">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alumno in alumnos %}
+                                <tr>
+                                    <td class="border-light py-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            {% if alumno.foto %}
+                                                <img src="{{ alumno.foto.url }}" class="rounded-circle object-fit-cover shadow-sm" style="width: 40px; height: 40px;">
+                                            {% else %}
+                                                <div class="bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center border" style="width: 40px; height: 40px;">
+                                                    <i class="bi bi-person fs-5"></i>
+                                                </div>
+                                            {% endif %}
+                                            <span class="fw-bold text-dark">{{ alumno.nombre }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="border-light">
+                                        {% if alumno.transporte %}
+                                            <span class="badge bg-info bg-opacity-10 text-dark border border-info border-opacity-25 px-2 py-1">
+                                                <i class="bi bi-truck text-info me-1"></i> {{ alumno.transporte.nombre }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-light text-secondary border px-2 py-1">
+                                                <i class="bi bi-person-walking me-1"></i> Se retira a pie
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="border-light text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editModal{{ alumno.id }}">
+                                            <i class="bi bi-pencil-square me-1"></i> Editar
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-5 text-muted">
+                                        <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                                        No hay estudiantes registrados en este curso.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-state-minimal shadow-sm text-center h-100 d-flex flex-column justify-content-center">
+                <i class="bi bi-arrow-left-circle fs-1 text-muted opacity-50 mb-3"></i>
+                <h5 class="fw-bold text-dark">Selecciona un Curso</h5>
+                <p class="text-muted small">Haz clic en un grado del menú lateral para cargar a los estudiantes.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if alumnos %}
+    {% for alumno in alumnos %}
+        <div class="modal fade" id="editModal{{ alumno.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="border-radius: 20px; border: none;">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="fw-bold text-dark"><i class="bi bi-pencil-square text-primary me-2"></i> Editar Estudiante</h5>
+                        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form method="POST" action="{% url 'editar_estudiante' alumno.id %}" enctype="multipart/form-data">
+                        <div class="modal-body p-4">
+                            {% csrf_token %}
+                            <input type="hidden" name="grado_actual_id" value="{{ grado_actual.id }}">
+                            
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">Nombre Completo</label>
+                                <input type="text" name="nombre" class="form-control bg-light border-0 py-2" value="{{ alumno.nombre }}" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">Grado / Curso</label>
+                                <select name="grado_id" class="form-select bg-light border-0 py-2">
+                                    {% for g in grados %}
+                                        <option value="{{ g.id }}" {% if g.id == alumno.grado.id %}selected{% endif %}>{{ g.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">Transporte (Ruta / Acudiente)</label>
+                                <select name="transporte_id" class="form-select bg-light border-0 py-2">
+                                    <option value="">-- Se retira a pie / Sin transporte --</option>
+                                    {% for t in transportes %}
+                                        <option value="{{ t.id }}" {% if alumno.transporte and t.id == alumno.transporte.id %}selected{% endif %}>{{ t.nombre }} ({{ t.codigo_unico }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label text-muted small fw-bold">Actualizar Foto</label>
+                                <input type="file" name="foto" class="form-control bg-light border-0" accept="image/*">
+                                <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">Deja en blanco si no deseas cambiar la foto actual.</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0 pt-0 justify-content-center">
+                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<style>
+.tracking-widest { letter-spacing: 0.15em; }
+.grado-minimal-card { background: #ffffff; border-radius: 20px; transition: all 0.3s; padding: 24px; }
+.empty-state-minimal { padding: 3rem; border-radius: 20px; background: #ffffff; border: 1px dashed #e2e8f0; }
+.animate-item { opacity: 0; animation: fadeInUp 0.5s ease forwards; animation-delay: calc(var(--delay) * 0.1s); }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.minimal-breadcrumb { background: #ffffff; border: 1px solid #f1f5f9; border-radius: 50px; font-size: 0.85rem; }
+.minimal-breadcrumb a { color: #64748b; text-decoration: none; transition: color 0.2s; }
+.minimal-breadcrumb a:hover { color: #dc3545; }
+</style>
+{% endblock %}

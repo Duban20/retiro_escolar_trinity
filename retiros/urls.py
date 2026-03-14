@@ -2,23 +2,22 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Selección de rol
+    # Inicio / Selección de rol
     path('', views.seleccionar_rol, name='seleccionar_rol'),
 
-    # Portería
-    path('porteria/', views.seleccionar_nivel, name='seleccionar_nivel'),
-    path('nivel/<int:nivel_id>/', views.lista_grados, name='lista_grados'),
-    path('grado/<int:grado_id>/', views.lista_alumnos, name='lista_alumnos'),
-    path('retiro/<int:alumno_id>/', views.crear_retiro, name='crear_retiro'),
-    path('retiros/masivos/', views.crear_retiros_masivos, name='crear_retiros_masivos'),
-    path('buscar-alumnos/', views.buscar_alumnos_ajax, name='buscar_alumnos_ajax'),
+    # 1. Portería (Solo encolar)
+    path('porteria/', views.porteria_encolar, name='porteria_encolar'),
+    
+    # 2. Pantalla General (Docentes, Micrófono, Entregas)
+    path('pantalla/', views.panel_cola_transportes, name='panel_cola_transportes'),
 
-    # Docente
-    path('docente/', views.docente_seleccionar_grado, name='docente_seleccionar_grado'),
-    path('docente/<int:grado_id>/', views.docente_pendientes, name='docente_pendientes'),
-    path('docente/<int:grado_id>/cantidad/', views.cantidad_pendientes, name='cantidad_pendientes'),
-    path('docente/<int:grado_id>/lista/', views.lista_pendientes_json, name='lista_pendientes_json'),
+    # 3. Acciones lógicas (Endpoints)
+    path('transportes/encolar/', views.encolar_transporte, name='encolar_transporte'),
+    path('transportes/despachar/<int:turno_id>/', views.despachar_transporte, name='despachar_transporte'),
+    path('transportes/buscar-ajax/', views.buscar_transporte_ajax, name='buscar_transporte_ajax'),
+    path('transportes/verificar-cola/', views.verificar_cambios_cola, name='verificar_cambios_cola'),
 
-    # Entregar
-    path('entregar/<int:retiro_id>/', views.marcar_entregado, name='marcar_entregado'),
+    # 4. Directorio Escolar
+    path('directorio/', views.directorio_estudiantes, name='directorio_estudiantes'),
+    path('directorio/editar/<int:alumno_id>/', views.editar_estudiante, name='editar_estudiante'),
 ]
