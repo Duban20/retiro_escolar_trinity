@@ -4,8 +4,8 @@ from .models import Alumno, Transporte, TurnoTransporte
 
 @admin.register(Transporte)
 class TransporteAdmin(admin.ModelAdmin):
-    list_display = ('codigo_unico', 'nombre', 'conductor', 'activo')
-    search_fields = ('codigo_unico', 'nombre', 'conductor')
+    list_display = ('codigo_unico', 'nombre', 'activo')
+    search_fields = ('codigo_unico', 'nombre')
     list_filter = ('activo',)
 
 @admin.register(TurnoTransporte)

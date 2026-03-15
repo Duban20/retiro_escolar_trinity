@@ -13,9 +13,9 @@ class Grado(models.Model):
     
 
 class Transporte(models.Model):
-    codigo_unico = models.CharField(max_length=20, unique=True, help_text="Ej: RUTA-01")
-    nombre = models.CharField(max_length=100, help_text="Ej: Buseta Norte o Nombre del Conductor")
-    conductor = models.CharField(max_length=100, blank=True, null=True)
+    codigo_unico = models.CharField(max_length=20, unique=True)
+    nombre = models.CharField(max_length=100)
+    # conductor = models.CharField(max_length=100, blank=True, null=True)
     activo = models.BooleanField(default=True)
 
     def __str__(self):
