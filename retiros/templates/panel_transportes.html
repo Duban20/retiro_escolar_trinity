@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% load static %}
+
 {% block title %} Panel de Transportes {% endblock %}
 
 {% block content %}
@@ -191,6 +193,8 @@
     </div>
 </div>
 
+<audio id="sonido-turno" src="{% static 'audio/bocina-car.mp3' %}" preload="auto"></audio>
+
 <style>
 .tracking-widest { letter-spacing: 0.15em; }
 .grado-minimal-card { background: #ffffff; border-radius: 24px; padding: 24px; transition: all 0.3s; }
@@ -215,16 +219,17 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    let hashActual = null; // Arrancamos en nulo en vez de vacío
+    // ==========================================
+    // 1. LÓGICA DE REFRESCO AUTOMÁTICO (AJAX)
+    // ==========================================
+    let hashActual = null;
 
-    // 1. Tomar una "foto" inicial del estado apenas carga la página de forma invisible
     fetch(`{% url 'verificar_cambios_cola' %}`)
         .then(res => res.json())
         .then(data => { hashActual = data.hash; })
         .catch(err => console.error("Error cargando hash inicial:", err));
 
     function refrescarMonitor() {
-        // 2. Proteger al usuario si tiene un acordeón abierto
         let acordeonAbierto = document.querySelector('.collapse.show');
         if (acordeonAbierto) return;
 
@@ -233,34 +238,76 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 const hashNuevo = data.hash;
 
-                // 3. Condición estricta: Solo actualiza si YA había un hash previo y el nuevo es distinto
                 if (hashActual !== null && hashNuevo !== undefined && hashActual !== hashNuevo) {
-                    
                     fetch(window.location.href)
                         .then(response => response.text())
                         .then(html => {
                             const parser = new DOMParser();
                             const doc = parser.parseFromString(html, 'text/html');
                             
-                            // Reemplazo limpio del DOM
                             const nuevoContenido = doc.getElementById('panel-monitor').innerHTML;
                             document.getElementById('panel-monitor').innerHTML = nuevoContenido;
                             
-                            // Guardamos la nueva firma
                             hashActual = hashNuevo; 
+
+                            // Sonido (Notificación)
+                            const audio = document.getElementById('sonido-turno');
+                            if (audio) {
+                                audio.play().catch(err => console.log("Para escuchar el sonido, debes hacer clic al menos una vez en la pantalla."));
+                            }
+
+                            // <--- VIBRACIÓN --->
+                            // Verificamos si el dispositivo soporta vibración
+                            if (navigator.vibrate) {
+                                // Patrón: Vibra 300ms, pausa 100ms, vibra 300ms (como una doble notificación)
+                                navigator.vibrate([300, 100, 300]); 
+                            }
+
                         })
                         .catch(error => console.error("Error descargando nuevo HTML:", error));
                         
                 } else if (hashActual === null && hashNuevo !== undefined) {
-                    // Fallback de seguridad: si la primera carga falló, asignamos el hash sin parpadear
                     hashActual = hashNuevo;
                 }
             })
             .catch(error => console.error("Error verificando estado:", error));
     }
 
-    // Ejecutar la revisión cada 4 segundos
     setInterval(refrescarMonitor, 4000);
+
+    // ==========================================
+    // 2. LÓGICA PARA MANTENER LA PANTALLA ENCENDIDA
+    // ==========================================
+    let wakeLock = null;
+
+    const solicitarWakeLock = async () => {
+        try {
+            // Verificamos si el navegador soporta esta tecnología
+            if ('wakeLock' in navigator) {
+                wakeLock = await navigator.wakeLock.request('screen');
+                console.log('Pantalla mantenida encendida (Wake Lock activo).');
+                
+                wakeLock.addEventListener('release', () => {
+                    console.log('Wake Lock liberado.');
+                });
+            } else {
+                console.log('El navegador no soporta Wake Lock API.');
+            }
+        } catch (err) {
+            console.error(`Error con Wake Lock: ${err.name}, ${err.message}`);
+        }
+    };
+
+    // Pedimos el bloqueo de pantalla apenas carga la página
+    solicitarWakeLock();
+
+    // Si el dispositivo apaga la pantalla por fuerza mayor o el usuario cambia de pestaña, 
+    // el bloqueo se pierde. Aquí lo volvemos a pedir automáticamente al regresar.
+    document.addEventListener('visibilitychange', async () => {
+        if (wakeLock !== null && document.visibilityState === 'visible') {
+            solicitarWakeLock();
+        }
+    });
 });
 </script>
 {% endblock %}
