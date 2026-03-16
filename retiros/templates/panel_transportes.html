@@ -17,12 +17,6 @@
     <h1 class="display-6 fw-bold text-dark mb-2">Despacho de Transportes</h1>
 </div>
 
-<h1 class="display-6 fw-bold text-dark mb-2">Despacho de Rutas</h1>
-    
-    <button id="btn-activar-alertas" class="btn btn-outline-danger rounded-pill px-4 mt-2 shadow-sm">
-        <i class="bi bi-bell-slash me-2"></i> Activar Alertas Sonoras y Vibración
-    </button>
-
 <div class="row g-4 justify-content-center" id="panel-monitor">
 
     <div class="col-12 col-lg-6 animate-item" style="--delay: 1">
@@ -260,20 +254,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             const audio = document.getElementById('sonido-turno');
                             if (audio) {
                                 audio.play().catch(err => console.log("Para escuchar el sonido, debes hacer clic al menos una vez en la pantalla."));
-                            }
-
-                            // <--- VIBRACIÓN --->
-                            // Verificamos si el dispositivo soporta vibración
-                            if (navigator.vibrate) {
-                                // Patrón: Vibra 300ms, pausa 100ms, vibra 300ms (como una doble notificación)
-                                navigator.vibrate([300, 100, 300]); 
-
-                                // Cambiamos el diseño del botón para confirmar
-                                this.classList.replace('btn-outline-danger', 'btn-success');
-                                this.innerHTML = '<i class="bi bi-bell-fill me-2"></i> Alertas Activadas';
-                            } else {
-                                alert("Tu navegador o dispositivo no soporta la función de vibración web.");
-                            
                             }
 
                         })

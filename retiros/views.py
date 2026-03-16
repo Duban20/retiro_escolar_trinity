@@ -5,11 +5,45 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Q
 from django.urls import reverse
+from django.core.cache import cache
 from .models import Transporte, TurnoTransporte, Grado, Alumno
 
 
+def realizar_cierre_diario():
+    """
+    Verifica si cambió el día usando caché ultrarrápida en RAM.
+    Si es un nuevo día, limpia la cola y actualiza a los alumnos.
+    """
+    hoy = timezone.localdate()
+    hoy_str = str(hoy) # Convertimos la fecha a texto, ej: "2026-03-16"
+    
+    # 1. Verificamos en la memoria RAM si ya hicimos el cierre de hoy.
+    # Esto toma 0.0001 segundos y no toca la base de datos.
+    if cache.get('ultimo_cierre_diario') == hoy_str:
+        return # Si ya se hizo, cortamos la función de inmediato.
+
+    # 2. Si la RAM dice que no se ha hecho, hacemos la validación de seguridad
+    if Alumno.objects.filter(activo=True).exclude(fecha_estado=hoy).exists():
+        
+        # LIMPIAR LA COLA:
+        TurnoTransporte.objects.filter(estado__in=['EN_COLA', 'EMBARCANDO']).update(
+            estado='DESPACHADO',
+            hora_despacho=timezone.now()
+        )
+        
+        # REINICIAR ALUMNOS:
+        Alumno.objects.filter(activo=True).update(
+            en_colegio=True, 
+            fecha_estado=hoy
+        )
+        
+    # 3. Guardamos en la memoria RAM que el cierre de hoy ya se completó.
+    # Le damos un tiempo de vida de 24 horas (86400 segundos).
+    cache.set('ultimo_cierre_diario', hoy_str, timeout=86400)
+
 @login_required
 def seleccionar_rol(request):
+    realizar_cierre_diario()
     if request.user.groups.filter(name='Porteria').exists():
         return redirect('porteria_encolar')
     elif request.user.groups.filter(name='Docentes').exists():
@@ -21,6 +55,7 @@ def seleccionar_rol(request):
 # ==========================================
 @login_required
 def porteria_encolar(request):
+    realizar_cierre_diario()
     # Solo mostramos cuántos hay en fila como dato informativo
     vehiculos_en_cola = TurnoTransporte.objects.filter(estado='EN_COLA').count()
     return render(request, 'porteria_encolar.html', {'vehiculos_en_cola': vehiculos_en_cola})
@@ -52,6 +87,7 @@ def encolar_transporte(request):
 # ==========================================
 @login_required
 def panel_cola_transportes(request):
+    realizar_cierre_diario()
     turno_actual = TurnoTransporte.objects.filter(estado='EMBARCANDO').first()
     
     # Convertimos la cola a lista para poder separarla
@@ -144,6 +180,7 @@ def verificar_cambios_cola(request):
 
 @login_required
 def directorio_estudiantes(request):
+    realizar_cierre_diario()
     """Muestra los grados y los alumnos del grado seleccionado."""
     # Obtenemos todos los grados y transportes activos para los selectores
     grados = Grado.objects.filter(activo=True).order_by('orden', 'nombre')
