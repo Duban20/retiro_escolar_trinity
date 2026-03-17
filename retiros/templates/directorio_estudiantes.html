@@ -74,9 +74,15 @@
                                         {% endif %}
                                     </td>
                                     <td class="border-light text-end">
-                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editModal{{ alumno.id }}">
-                                            <i class="bi bi-pencil-square me-1"></i> Editar
-                                        </button>
+                                        {% if puede_editar %}
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editModal{{ alumno.id }}">
+                                                <i class="bi bi-pencil-square me-1"></i> Editar
+                                            </button>
+                                        {% else %}
+                                            <span class="badge bg-light text-secondary border px-2 py-1">
+                                                <i class="bi bi-eye me-1"></i> Lectura
+                                            </span>
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% empty %}

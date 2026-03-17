@@ -44,10 +44,12 @@ def realizar_cierre_diario():
 @login_required
 def seleccionar_rol(request):
     realizar_cierre_diario()
-    if request.user.groups.filter(name='Porteria').exists():
-        return redirect('porteria_encolar')
-    elif request.user.groups.filter(name='Docentes').exists():
+    
+    # 1. Solo 'Docentes' es redirigido automáticamente a la pantalla de cola
+    if request.user.groups.filter(name='Docentes').exists():
         return redirect('panel_cola_transportes')
+        
+    # 2. Los demás (Administrador, Logistica, etc.) ven el menú principal
     return render(request, 'seleccionar_rol.html')
 
 # ==========================================
@@ -182,11 +184,9 @@ def verificar_cambios_cola(request):
 def directorio_estudiantes(request):
     realizar_cierre_diario()
     """Muestra los grados y los alumnos del grado seleccionado."""
-    # Obtenemos todos los grados y transportes activos para los selectores
     grados = Grado.objects.filter(activo=True).order_by('orden', 'nombre')
     transportes = Transporte.objects.filter(activo=True).order_by('nombre')
     
-    # Vemos si el usuario seleccionó un grado en la URL (ej: ?grado=2)
     grado_id = request.GET.get('grado')
     grado_actual = None
     alumnos = []
@@ -195,16 +195,26 @@ def directorio_estudiantes(request):
         grado_actual = get_object_or_404(Grado, id=grado_id)
         alumnos = Alumno.objects.filter(grado=grado_actual, activo=True).order_by('nombre')
 
+    # Validación de Rol: ¿Puede editar? (Solo el grupo Administrador)
+    puede_editar = request.user.groups.filter(name='Administrador').exists()
+
     return render(request, 'directorio_estudiantes.html', {
         'grados': grados,
         'transportes': transportes,
         'grado_actual': grado_actual,
-        'alumnos': alumnos
+        'alumnos': alumnos,
+        'puede_editar': puede_editar
     })
 
 @login_required
 def editar_estudiante(request, alumno_id):
     """Recibe los datos del modal y actualiza al estudiante."""
+    
+    # Seguridad de backend: Bloquear si no es Administrador
+    if not request.user.groups.filter(name='Administrador').exists():
+        messages.error(request, "Acceso denegado: Solo los administradores pueden editar alumnos.")
+        return redirect('directorio_estudiantes')
+
     if request.method == 'POST':
         alumno = get_object_or_404(Alumno, id=alumno_id)
         
